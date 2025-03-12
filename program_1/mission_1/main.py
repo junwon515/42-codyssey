@@ -1,12 +1,15 @@
 from pathlib import Path
+import csv
+import json
 
-print('Hello Mars \n')
+print('\nHello Mars')
 
 # 파일 경로 설정
 parent_path = Path(__file__).parent
-log_file_path = parent_path / 'mission_computer_main.log'
-log_analysis_file_path = parent_path / 'log_analysis.md'
-core_log_file_path = parent_path / 'core_log.log'
+main_log_path = parent_path / 'mission_computer_main.log'
+log_analysis_path = parent_path / 'log_analysis.md'
+error_log_path = parent_path / 'mission_computer_error.log'
+json_log_path = parent_path / 'mission_computer_main.json'
 
 # 로그 분석 보고서 내용
 log_analysis_content = """# Rocket Launch Incident Analysis Report
@@ -69,34 +72,52 @@ The mission was largely successful, but the **oxygen tank explosion** post-landi
 
 try:
     # 로그 파일 읽기
-    with log_file_path.open('r', encoding='utf-8') as log_file:
+    with main_log_path.open('r', encoding='utf-8') as log_file:
         log_lines = log_file.readlines()
 
     # 로그 전체 출력
-    print('=== Log Output ===')
+    print('\n=== Log Output ===')
     print(''.join(log_lines))
-            
+
     # 로그 역순 출력
     print('\n=== Log Output (Reversed) ===')
     print(''.join(reversed(log_lines)))
 
     # 문제가 되는 로그 저장
-    with core_log_file_path.open('w', encoding='utf-8') as core_log_file:
+    with error_log_path.open('w', encoding='utf-8') as core_log_file:
         core_log_file.writelines(log_lines[-3:])
 
     # 로그 분석 보고서 저장
-    with log_analysis_file_path.open('w', encoding='utf-8') as log_analysis_file:
+    with log_analysis_path.open('w', encoding='utf-8') as log_analysis_file:
         log_analysis_file.write(log_analysis_content)
 
     print('\n✅ Processing completed successfully!')
 
-except FileNotFoundError:
-    print('❌ Error: The file was not found.')
-except PermissionError:
-    print('❌ Error: You do not have permission to access this file.')
-except IsADirectoryError:
-    print('❌ Error: The specified path is a directory, not a file.')
-except IOError as e:
-    print(f'❌ Error: An I/O error occurred: {e}')
+
+    # 로그 CSV 파싱
+    logs = []
+    with main_log_path.open('r', encoding='utf-8') as log_file:
+        reader = csv.reader(log_file, delimiter=',')
+        headers = next(reader, None)
+        logs = [row for row in reader]
+
+    # 로그 리스트 출력
+    print('\n=== Log list ===')
+    print(logs)
+
+    # 로그 시간 역순 정렬
+    sorted_logs = sorted(logs, key=lambda x: x[0], reverse=True)
+
+    # 로그 사전 객체로 변환
+    log_dict = [dict(zip(headers, log)) for log in sorted_logs]
+
+    # 로그 사전 json 파일로 저장
+    with json_log_path.open('w', encoding='utf-8') as json_file:
+        json.dump(log_dict, json_file, indent=4)
+
+    print('\n✅ JSON file created successfully!')
+
+except (FileNotFoundError, IOError, PermissionError) as e:
+    print(f'❌ Error: {e}')
 except Exception as e:
     print(f'❌ An unexpected error occurred: {e}')
