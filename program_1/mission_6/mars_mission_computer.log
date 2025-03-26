@@ -1,0 +1,6 @@
+timestamp,internal_temperature,external_temperature,internal_humidity,external_illuminance,internal_co2,internal_oxygen
+2025-03-26 05:45:00,18,7,57.9,529,0.03,4.3
+2025-03-26 05:46:00,19,13,55.1,591,0.04,6.1
+2025-03-26 06:00:00,26,14,50.7,624,0.06,6.5
+2025-03-26 06:05:00,30,21,57.7,581,0.03,5.5
+2025-03-26 06:06:00,24,13,59.6,640,0.04,6.0
