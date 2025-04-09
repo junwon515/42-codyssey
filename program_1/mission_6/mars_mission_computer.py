@@ -1,9 +1,12 @@
 import random
 from datetime import datetime,timedelta
 from threading import Timer
+import platform
+import psutil
 
 PARENT_PATH = 'program_1/mission_6/'
 LOG_PATH = PARENT_PATH + 'mars_mission_computer.log'
+SETTING_PATH = PARENT_PATH + 'setting.txt'
 
 env_values = {
     'timestamp': None,
@@ -94,11 +97,51 @@ class MissionComputer:
                 if t:
                     t.cancel()
 
+    def get_mission_computer_info(self):
+        """미션 컴퓨터 정보를 반환한다."""
+        computer_info = {}
+        try:
+            settings = self.__read_setting()
+            if not settings:
+                print('\n❇️  No settings found.')
+                return computer_info
+
+            info_map = {
+                "os": lambda: platform.system(),
+                "os_version": lambda: platform.version(),
+                "cpu_type": lambda: platform.processor(),
+                "cpu_physical_cores": lambda: psutil.cpu_count(logical=False),
+                "memory_total_gb": lambda: psutil.virtual_memory().total / (1024 ** 3)
+            }
+
+            computer_info = {key: info_map[key]() for key in settings if key in info_map}
+
+            print('\n=== Mission Computer Info ===')
+            print(self.__dict_to_json(computer_info))
+        except Exception as e:
+            print(f"\n❌ Failed to get mission computer info: {e}")
+
+        return computer_info
+
+    def get_mission_computer_load(self):
+        """ 미션 컴퓨터의 부하를 반환한다. """
+        computer_load = {}
+        try:
+            computer_load = {
+                "cpu_usage_percent": psutil.cpu_percent(interval=1),
+                "memory_usage_percent": psutil.virtual_memory().percent
+            }
+            print('\n=== Mission Computer Load ===')
+            print(self.__dict_to_json(computer_load))
+        except Exception as e:
+            print(f"\n❌ Failed to get mission computer load: {e}")
+
+        return computer_load
+
     def _update_sensors(self):
         """ 센서 값을 업데이트한다. """
         try:
             self.ds.set_env()
-            # self.env_values.update(self.ds.get_env())
             
             print('\n=== Mars Base Environment ===')
             print(self.__dict_to_json(self.env_values))
@@ -170,6 +213,17 @@ class MissionComputer:
         
         return data
     
+    def __read_setting(self):
+        """ 설정 파일을 읽어온다. """
+        lines = []
+        try:
+            with open(SETTING_PATH, 'r', encoding='utf-8') as f:
+                lines = [line.strip().lower() for line in f if line.strip()]
+        except Exception as e:
+            print(f'❌ Error reading setting file: {e}')
+
+        return lines
+    
     def __dict_to_json(self, obj, indent=0):
         spacing = '  ' * indent
         if isinstance(obj, dict):
@@ -195,8 +249,9 @@ class MissionComputer:
     
 def main():
     """ 메인 함수 """
-    RunComputer = MissionComputer(env_values)
-    RunComputer.get_sensor_data()
+    runComputer = MissionComputer(env_values)
+    runComputer.get_mission_computer_info()
+    runComputer.get_mission_computer_load()
     
 if __name__ == '__main__':
     main()
