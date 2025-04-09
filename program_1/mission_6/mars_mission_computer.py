@@ -101,7 +101,7 @@ class MissionComputer:
             # self.env_values.update(self.ds.get_env())
             
             print('\n=== Mars Base Environment ===')
-            print({key.replace('mars_base_', ''): value for key, value in self.env_values.items()})
+            print(self.__dict_to_json(self.env_values))
             
             self.timer[0] = Timer(5, self._update_sensors)
             self.timer[0].start()
@@ -119,7 +119,7 @@ class MissionComputer:
             averages = {list(self.env_values.keys())[i]: sum(values) / len(values)
                          for i, values in enumerate(zip(*data))}
             print('\n=== Average Sensor Values (last 5 minutes) ===')
-            print({key.replace('mars_base_', ''): round(value, 2) for key, value in averages.items()})
+            print(self.__dict_to_json(averages))
             
             self.timer[1] = Timer(300, self._print_avg)
             self.timer[1].start()
@@ -169,7 +169,30 @@ class MissionComputer:
             print(f'❌ Error reading log file: {e}')
         
         return data
-
+    
+    def __dict_to_json(self, obj, indent=0):
+        spacing = '  ' * indent
+        if isinstance(obj, dict):
+            items = []
+            for key, value in obj.items():
+                json_key = f'"{str(key)}"'
+                json_value = self.__dict_to_json(value, indent + 1)
+                items.append(f'{spacing}  {json_key}: {json_value}')
+            return '{\n' + ',\n'.join(items) + f'\n{spacing}' + '}'
+        elif isinstance(obj, list):
+            items = [self.__dict_to_json(item, indent + 1) for item in obj]
+            return '[\n' + ',\n'.join(f'{spacing}  {item}' for item in items) + f'\n{spacing}' + ']'
+        elif isinstance(obj, str):
+            return f'"{obj}"'
+        elif isinstance(obj, bool):
+            return 'true' if obj else 'false'
+        elif obj is None:
+            return 'null'
+        elif isinstance(obj, float):
+            return f'{round(obj, 2):.2f}'
+        else:  # int 등
+            return str(obj)
+    
 def main():
     """ 메인 함수 """
     RunComputer = MissionComputer(env_values)

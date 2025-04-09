@@ -87,7 +87,7 @@ def save_data(file_path, data):
         print(f'❌ Failed to save data: {e}')
 
 def process_parts_data():
-    """ 메인 함수 """
+    """ 부품 데이터 처리 """
     # 부품 데이터 불러오기
     data_list = [load_data(f'{MAIN_PATH}{i:03}.csv') for i in range(1, 4)]
     data_list = [data[1:, :] for data in data_list if data is not None]
@@ -122,8 +122,12 @@ def process_parts_data():
     else:
         print("ℹ️ No data to transpose.")
 
-if __name__ == '__main__':
+def main():
+    """ 메인 함수 """
     if input('부품 데이터 처리? (y/n) ').lower() == 'y':
         process_parts_data()
     elif input('돔 계산기? (y/n) ').lower() == 'y':
         dome_calculator()
+    
+if __name__ == '__main__':
+    main()
