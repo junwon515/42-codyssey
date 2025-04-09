@@ -1,8 +1,10 @@
 import random
-from datetime import datetime,timedelta
-from threading import Timer
+import threading
+import multiprocessing
 import platform
 import psutil
+import time
+from datetime import datetime, timedelta
 
 PARENT_PATH = 'program_1/mission_6/'
 LOG_PATH = PARENT_PATH + 'mars_mission_computer.log'
@@ -40,9 +42,8 @@ class DummySensor:
             'mars_base_internal_co2': round(random.uniform(0.02, 0.1), 2),
             'mars_base_internal_oxygen': round(random.uniform(4.0, 7.0), 1),
         })
-        print('\n🌡️  Sensor values successfully set')
         self.__write_log()
-
+        
     def __input_timestamp(self):
         """ 타임스탬프를 설정한다. """
         for i in range(3):
@@ -67,171 +68,131 @@ class DummySensor:
                         header.replace('mars_base_', '') for header in self.env_values.keys()
                     ]) + '\n')
                 f.write(','.join(map(str, self.env_values.values())) + '\n')
-                print('\n📝 Log file written successfully')
         except Exception as e:
-            print(f'❌ Failed to write Log file: {e}')
+            print(f'❌ Failed to write Log file: {e}', flush=True)
 
 class MissionComputer:
     """ 화성 미션 컴퓨터 클래스 """
     def __init__(self, env_values):
         self.env_values = env_values
         self.ds = DummySensor(env_values)
-        self.timer = [None] * 2
+
+    def start(self):
+        self.get_sensor_data()
+        threading.Thread(target=self._schedule_task, args=(20, self.get_mission_computer_info), daemon=True).start()
+        threading.Thread(target=self._schedule_task, args=(20, self.get_mission_computer_load), daemon=True).start()
 
     def get_sensor_data(self):
         """ 센서 데이터를 가져온다. """
-        try:
-            self._update_sensors()
-            self._print_avg()
-            
-            while True:
-                if input().strip().lower() == 'exit':
-                    break
-        except KeyboardInterrupt:
-            print('\n❇️  System interrupted by user.')
-        except Exception as e:
-            print(f'❌ An unexpected error occurred: {e}')
-        finally:
-            print('\n❇️  Sytem stoped...')
-            for t in self.timer: 
-                if t:
-                    t.cancel()
+        threading.Thread(target=self._schedule_task, args=(5, self._update_sensors), daemon=True).start()
+        threading.Thread(target=self._schedule_task, args=(300, self._print_avg), daemon=True).start()
 
     def get_mission_computer_info(self):
-        """미션 컴퓨터 정보를 반환한다."""
-        computer_info = {}
+        """ 화성 미션 컴퓨터 정보를 가져온다. """
         try:
             settings = self.__read_setting()
             if not settings:
-                print('\n❇️  No settings found.')
-                return computer_info
-
+                raise ValueError('No settings found.')
             info_map = {
-                "os": lambda: platform.system(),
-                "os_version": lambda: platform.version(),
-                "cpu_type": lambda: platform.processor(),
-                "cpu_physical_cores": lambda: psutil.cpu_count(logical=False),
-                "memory_total_gb": lambda: psutil.virtual_memory().total / (1024 ** 3)
+                'os': platform.system,
+                'os_version': platform.version,
+                'cpu_type': platform.processor,
+                'cpu_physical_cores': lambda: psutil.cpu_count(logical=False),
+                'memory_total_gb': lambda: psutil.virtual_memory().total / (1024 ** 3)
             }
-
-            computer_info = {key: info_map[key]() for key in settings if key in info_map}
-
-            print('\n=== Mission Computer Info ===')
-            print(self.__dict_to_json(computer_info))
+            return {key: info_map[key]() for key in settings if key in info_map}
         except Exception as e:
-            print(f"\n❌ Failed to get mission computer info: {e}")
-
-        return computer_info
+            print(f'\n❌ Failed to get mission computer info: {e}', flush=True)
 
     def get_mission_computer_load(self):
-        """ 미션 컴퓨터의 부하를 반환한다. """
-        computer_load = {}
+        """ 화성 미션 컴퓨터의 부하를 가져온다. """
         try:
-            computer_load = {
-                "cpu_usage_percent": psutil.cpu_percent(interval=1),
-                "memory_usage_percent": psutil.virtual_memory().percent
+            return {
+                'cpu_usage_percent': psutil.cpu_percent(interval=1),
+                'memory_usage_percent': psutil.virtual_memory().percent
             }
-            print('\n=== Mission Computer Load ===')
-            print(self.__dict_to_json(computer_load))
         except Exception as e:
-            print(f"\n❌ Failed to get mission computer load: {e}")
-
-        return computer_load
-
+            print(f'\n❌ Failed to get mission computer load: {e}', flush=True)
+        
     def _update_sensors(self):
         """ 센서 값을 업데이트한다. """
         try:
             self.ds.set_env()
-            
-            print('\n=== Mars Base Environment ===')
-            print(self.__dict_to_json(self.env_values))
-            
-            self.timer[0] = Timer(5, self._update_sensors)
-            self.timer[0].start()
+            return self.ds.get_env()
         except Exception as e:
-            print(f'❌ Sensor update error: {e}')
+            print(f'❌ Error updating sensors: {e}', flush=True)
 
     def _print_avg(self):
-        """ 최근 5분간의 평균 센서 값을 출력한다. """
+        """ 최근 5분 평균 센서 값을 출력한다. """
         try:
             data = self.__read_recent_data()
             if not data:
-                print('\n❇️  No data available in the last 5 minutes.')
-                return
-            
-            averages = {list(self.env_values.keys())[i]: sum(values) / len(values)
-                         for i, values in enumerate(zip(*data))}
-            print('\n=== Average Sensor Values (last 5 minutes) ===')
-            print(self.__dict_to_json(averages))
-            
-            self.timer[1] = Timer(300, self._print_avg)
-            self.timer[1].start()
+                raise ValueError('No data available for averaging.')
+            return {
+                list(self.env_values.keys())[i]: sum(values) / len(values)
+                for i, values in enumerate(zip(*data))
+            }
         except Exception as e:
-            print(f'❌ Error calculating average: {e}')
+            print(f'❌ Error calculating averages: {e}', flush=True)
 
+    def _schedule_task(self, interval, func):
+        """ 주기적으로 함수를 실행한다. """
+        while True:
+            try:
+                start_time = time.time()
+                result = func()
+                if isinstance(result, dict):
+                    print(f'\n📌 Output from: {func.__name__}  {self.__dict_to_json(result)}\n', flush=True)
+                time.sleep(max(0, interval - (time.time() - start_time)))
+            except Exception as e:
+                print(f'\n❌ Error in scheduled task: {e}', flush=True)
+                time.sleep(interval)
+            
     def __read_recent_data(self):
-        """ 최근 5분간의 센서 데이터를 읽어온다. """     
-        five_minutes_ago = datetime.now() - timedelta(minutes=5)
-        data = []
-        
+        """ 최근 5분간의 센서 데이터를 읽는다. """
         try:
+            five_minutes_ago = datetime.now() - timedelta(minutes=5)
+            data = []
+
             with open(LOG_PATH, 'rb') as f:
                 f.seek(0, 2)
                 position = f.tell()
                 line = b""
-                
+
                 while position >= 0:
                     f.seek(position)
                     char = f.read(1)
-                    
                     if char == b'\n' and line:
-                        decoded_line = line.decode('utf-8').strip()
-                        values = decoded_line.split(',')
                         try:
+                            values = line.decode('utf-8').strip().split(',')
                             timestamp = datetime.strptime(values[0], '%Y-%m-%d %H:%M:%S')
-                        except ValueError:
-                            print(f'❌ Invalid timestamp in log: {values[0]}')
-                            position -= 1
-                            line = b''
-                            continue
-                        
-                        if timestamp < five_minutes_ago:
-                            break
-                        
-                        try:
+                            if timestamp < five_minutes_ago:
+                                break
                             data.append(list(map(float, values[1:])))
-                        except ValueError:
-                            print(f'❌ Invalid sensor data in log: {values[1:]}')
-                        
+                        except Exception:
+                            pass
                         line = b''
                     else:
                         line = char + line
-                    
                     position -= 1
+
+            return data
         except Exception as e:
-            print(f'❌ Error reading log file: {e}')
-        
-        return data
+            print(f'❌ Error reading log file: {e}', flush=True)
     
     def __read_setting(self):
-        """ 설정 파일을 읽어온다. """
-        lines = []
+        """ 설정 파일을 읽는다. """
         try:
             with open(SETTING_PATH, 'r', encoding='utf-8') as f:
-                lines = [line.strip().lower() for line in f if line.strip()]
+                return [line.strip().lower() for line in f if line.strip()]
         except Exception as e:
-            print(f'❌ Error reading setting file: {e}')
-
-        return lines
+            print(f'❌ Error reading setting file: {e}', flush=True)
     
     def __dict_to_json(self, obj, indent=0):
+        """ 딕셔너리를 JSON 형식으로 변환한다. """
         spacing = '  ' * indent
         if isinstance(obj, dict):
-            items = []
-            for key, value in obj.items():
-                json_key = f'"{str(key)}"'
-                json_value = self.__dict_to_json(value, indent + 1)
-                items.append(f'{spacing}  {json_key}: {json_value}')
+            items = [f'{spacing}  "{k}": {self.__dict_to_json(v, indent + 1)}' for k, v in obj.items()]
             return '{\n' + ',\n'.join(items) + f'\n{spacing}' + '}'
         elif isinstance(obj, list):
             items = [self.__dict_to_json(item, indent + 1) for item in obj]
@@ -244,14 +205,43 @@ class MissionComputer:
             return 'null'
         elif isinstance(obj, float):
             return f'{round(obj, 2):.2f}'
-        else:  # int 등
-            return str(obj)
+        return str(obj)
     
+def run_instance(env, stop_event):
+    """ 인스턴스를 실행한다. """
+    runComputer = MissionComputer(env)
+    runComputer.start()
+
+    try:
+        while not stop_event.is_set():
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print('\n❇️  Stopping instance...', flush=True)
+
 def main():
     """ 메인 함수 """
-    runComputer = MissionComputer(env_values)
-    runComputer.get_mission_computer_info()
-    runComputer.get_mission_computer_load()
-    
+    stop_event = multiprocessing.Event()
+    processes = []
+    for _ in range(3):
+        process = multiprocessing.Process(target=run_instance, args=(env_values.copy(), stop_event))
+        processes.append(process)
+        process.start()
+
+    try:
+        while True:
+            user_input = input()
+            if user_input.strip().lower() == 'exit':
+                stop_event.set()
+                break
+    except KeyboardInterrupt:
+        stop_event.set()
+        print('\n❇️  Interrupted by user.', flush=True)
+    finally:
+        for process in processes:
+            process.join()
+        print('\n❇️  System stopped...', flush=True)
+
 if __name__ == '__main__':
     main()
