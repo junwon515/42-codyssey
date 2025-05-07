@@ -3,65 +3,13 @@ from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QPushButton, QLi
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
-class CalculatorEngine:
-    def __init__(self):
-        self.expression = []
-
-    def input(self, value):
-        if value in ['+', '-', '*', '/']:
-            self._add_operator(value)
-        elif value == '.':
-            self._add_dot()
-        else:
-            self._add_digit(value)
-
-    def _add_operator(self, op):
-        if self.expression:
-            if self.expression[-1] in ['+', '-', '*', '/']:
-                self.expression[-1] = op
-            else:
-                self.expression.append(op)
-
-    def _add_dot(self):
-        if self.expression and '.' not in self.expression[-1]:
-            self.expression[-1] += '.'
-
-    def _add_digit(self, digit):
-        if not self.expression or self.expression[-1] in ['+', '-', '*', '/']:
-            self.expression.append(digit)
-        else:
-            self.expression[-1] += digit
-
-    def toggle_sign(self):
-        if self.expression:
-            if self.expression[-1].startswith('-'):
-                self.expression[-1] = self.expression[-1][1:]
-            else:
-                self.expression[-1] = '-' + self.expression[-1]
-
-    def calculate(self, percent=False):
-        try:
-            expr = ''.join(self.expression)
-            result = eval(expr)
-            if percent:
-                result /= 100
-            self.expression = [str(result)]
-            return result
-        except:
-            return 'Error'
-
-    def clear(self):
-        self.expression = []
-
-    def get_expression(self):
-        return self.expression
 
 class Calculator(QWidget):
     def __init__(self):
         super().__init__()
-        self.engine = CalculatorEngine()
         self.setWindowTitle('Calculator')
         self.initUI()
+        self.reset()
 
     def initUI(self):
         layout = QGridLayout()
@@ -115,74 +63,134 @@ class Calculator(QWidget):
         elif color == 'dark2':
             return 'background-color: #333333; color: white; border-radius: 65px; text-align: left; padding-left: 45px;'
 
-    def onButtonClick(self):
-        button = self.sender()
-        text = button.text()
+    def reset(self):
+        self.current = ''
+        self.operator = ''
+        self.operand = None
+        self.updateDisplay('0')
 
-        if text == 'AC':
-            self.engine.clear()
-        elif text == '+/-':
-            self.engine.toggle_sign()
-        elif text == '%':
-            result = self.engine.calculate(percent=True)
-            if result == 'Error':
-                self.display.setText('Error')
-                return
-        elif text == '=':
-            result = self.engine.calculate()
-            if result == 'Error':
-                self.display.setText('Error')
-                return
-        elif text in ['+', '−', '×', '÷']:
-            symbol = self.operatorToSymbol(text)
-            self.engine.input(symbol)
-        else:
-            self.engine.input(text)
+    def add(self):
+        self.calculate()
+        self.operator = '+'
 
-        self.updateDisplay()
+    def subtract(self):
+        self.calculate()
+        self.operator = '-'
 
-    def updateDisplay(self):
-        display_expr = ''
-        for item in self.engine.get_expression():
-            if item in ['+', '-', '*', '/']:
-                display_expr += self.symbolToDisplay(item)
-            else:
-                display_expr += self.format_number(item)
-        self.display.setText(display_expr)
+    def multiply(self):
+        self.calculate()
+        self.operator = '*'
 
-        if len(display_expr) > 12:
-            self.display.setFont(QFont('Helvetica', 25))
-        elif len(display_expr) > 6:
-            self.display.setFont(QFont('Helvetica', 35))
-        else:
-            self.display.setFont(QFont('Helvetica', 50))
+    def divide(self):
+        self.calculate()
+        self.operator = '/'
 
-    def operatorToSymbol(self, op):
-        return {
-            '+': '+',
-            '−': '-',
-            '×': '*',
-            '÷': '/'
-        }[op]
+    def equal(self):
+        self.calculate()
+        self.operator = ''
 
-    def symbolToDisplay(self, op):
-        return {
-            '+': '+',
-            '-': '−',
-            '*': '×',
-            '/': '÷'
-        }[op]
+    def negative_positive(self):
+        try:
+            if self.current == '' and self.operand is not None:
+                self.current = str(self.operand)
+                self.operator = ''
+        
+            value = float(self.current)
+            self.current = str(-value)
+            self.updateDisplay(self.current)
+        except:
+            self.updateDisplay('Error')
+
+    def percent(self):
+        try:
+            if self.current == '' and self.operand is not None:
+                self.current = str(self.operand)
+                self.operator = ''
+
+            value = float(self.current)
+            self.current = str(round(value/100, 6))
+            self.updateDisplay(self.current)
+        except:
+            self.updateDisplay('Error')
+
+    def calculate(self):
+        if self.current:
+            try:
+                if self.operand is not None and self.operator:
+                    expression = f'{self.operand}{self.operator}{self.current}'
+                    result = round(eval(expression), 6)
+                    self.operand = result
+                    self.current = str(result)
+                    self.updateDisplay(self.current)
+                else:
+                    self.operand = float(self.current)
+                self.current = ''
+            except:
+                self.reset()
+                self.updateDisplay('Error')
 
     def format_number(self, number_str):
         try:
             if '.' in number_str:
+                if number_str.startswith('-'):
+                    sign = '-'
+                    number_str = number_str[1:]
+                else:
+                    sign = ''
                 integer, decimal = number_str.split('.')
-                return f'{int(integer):,}.{decimal}'
+                formatted_integer = f'{int(integer):,}'
+                return f'{sign}{formatted_integer}.{decimal}'
             else:
                 return f'{int(number_str):,}'
         except:
             return number_str
 
+    def updateDisplay(self, number_str):
+        length = len(number_str)
+        formatted = self.format_number(number_str)
+
+        if length <= 6:
+            font_size = 50
+        elif length <= 8:
+            font_size = 40
+        elif length <= 10:
+            font_size = 30
+        else:
+            font_size = 20
+
+        self.display.setFont(QFont('Helvetica', font_size))
+        self.display.setText(formatted)
+
+    def onButtonClick(self):
+        button = self.sender()
+        text = button.text()
+
+        if text == 'AC':
+            self.reset()
+        elif text in '0123456789':
+            if self.current == '':
+                self.current = text
+            else:
+                self.current += text
+            self.updateDisplay(self.current)
+        elif text == '.':
+            if '.' not in self.current:
+                self.current += '.' if self.current else '0.'
+                self.updateDisplay(self.current)
+        elif text == '+':
+            self.add()
+        elif text == '−':
+            self.subtract()
+        elif text == '×':
+            self.multiply()
+        elif text == '÷':
+            self.divide()
+        elif text == '=':
+            self.equal()
+        elif text == '+/-':
+            self.negative_positive()
+        elif text == '%':
+            self.percent()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
