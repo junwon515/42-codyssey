@@ -41,7 +41,7 @@ def unlock_zip():
             except:
                 if attempts % 1000 == 0:
                     elapsed = time.time() - start_time
-                    print(f'Attempts: {attempts//1000} K | Elapsed Time: {elapsed:.2f} seconds', end='\r')
+                    print(f'[{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}] Password : {pwd} | Attempts: {attempts//1000} K | Elapsed Time: {elapsed:.2f} seconds', end='\r')
                 return False
         else:
             for c in CHARSET:
