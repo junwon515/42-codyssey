@@ -93,16 +93,35 @@ def list_recordings(start_date, end_date):
     else:
         print('❗ 해당 기간에 녹음된 파일이 없습니다.')
 
+def parse_partial_date(date_str, is_start=True):
+    try:
+        if len(date_str) == 4:
+            return datetime.datetime.strptime(date_str, '%Y') if is_start else \
+                   datetime.datetime.strptime(date_str, '%Y').replace(month=12, day=31)
+        elif len(date_str) == 6:
+            return datetime.datetime.strptime(date_str, '%Y%m') if is_start else \
+                   (datetime.datetime.strptime(date_str, '%Y%m') + datetime.timedelta(days=31)).replace(day=1) - datetime.timedelta(days=1)
+        elif len(date_str) == 8:
+            return datetime.datetime.strptime(date_str, '%Y%m%d')
+        else:
+            raise ValueError
+    except ValueError:
+        raise ValueError
+
 def parse_date_range(date_range_str):
     try:
+        if not date_range_str:
+            return datetime.datetime.min, datetime.datetime.max
         if '~' not in date_range_str:
             raise ValueError
         start_str, end_str = date_range_str.split('~')
-        start_date = datetime.datetime.strptime(start_str, '%Y%m%d') if start_str else datetime.datetime.min
-        end_date = datetime.datetime.strptime(end_str, '%Y%m%d') if end_str else datetime.datetime.max
+
+        start_date = parse_partial_date(start_str.strip(), is_start=True) if start_str.strip() else datetime.datetime.min
+        end_date = parse_partial_date(end_str.strip(), is_start=False) if end_str.strip() else datetime.datetime.max
+
         return start_date, end_date
     except ValueError:
-        print('❗ 날짜 형식이 잘못되었습니다. YYYYMMDD~YYYYMMDD 형식으로 입력해주세요.')
+        print('❗ 날짜 형식이 잘못되었습니다.')
         return None, None
 
 def main():
