@@ -11,12 +11,12 @@ RECORD_FOLDER = os.path.join(PARENT_PATH, 'records/')
 MAX_RECORD_SECONDS = 60
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
+SAMPLE_WIDTH = pyaudio.PyAudio().get_sample_size(FORMAT)
 CHANNELS = 1
 RATE = 44100
 
 class Recorder:
     def __init__(self):
-        self.audio = pyaudio.PyAudio()
         self.frames = []
         self.stop_recording = False
         self._ensure_record_folder()
@@ -29,7 +29,8 @@ class Recorder:
         self.stop_recording = True
 
     def record(self):
-        stream = self.audio.open(
+        audio = pyaudio.PyAudio()
+        stream = audio.open(
             format=FORMAT,
             channels=CHANNELS,
             rate=RATE,
@@ -42,6 +43,7 @@ class Recorder:
         input_thread.start()
 
         self.frames.clear()
+        self.stop_recording = False
         start_time = time.time()
         elapsed_time = 0
 
@@ -52,7 +54,7 @@ class Recorder:
 
         stream.stop_stream()
         stream.close()
-        self.audio.terminate()
+        audio.terminate()
 
         self._save_recording()
 
@@ -62,7 +64,7 @@ class Recorder:
 
         with wave.open(filepath, 'wb') as wf:
             wf.setnchannels(CHANNELS)
-            wf.setsampwidth(self.audio.get_sample_size(FORMAT))
+            wf.setsampwidth(SAMPLE_WIDTH)
             wf.setframerate(RATE)
             wf.writeframes(b''.join(self.frames))
 
