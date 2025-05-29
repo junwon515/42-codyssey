@@ -1,12 +1,10 @@
 import os
 import threading
 import datetime
-import time
 import wave
 import pyaudio
 import speech_recognition as sr
 from pydub import AudioSegment, silence
-import csv
 
 PARENT_PATH = os.path.dirname(os.path.abspath(__file__))
 RECORD_FOLDER = os.path.join(PARENT_PATH, 'records/')
@@ -50,12 +48,10 @@ class Recorder:
 
         self.frames.clear()
         self.stop_recording = False
-        start_time = time.time()
-        elapsed_time = 0
 
-        while not self.stop_recording and elapsed_time < MAX_RECORD_SECONDS:
-            elapsed_time = time.time() - start_time
-            print(f'🔴 녹음 중... {elapsed_time:.1f}초', end='\r')
+        for i in range(0, int(RATE / CHUNK * MAX_RECORD_SECONDS) + 1):
+            if self.stop_recording: break
+            print(f'🔴 녹음 중... {i * CHUNK / RATE:.1f}초', end='\r')
             self.frames.append(stream.read(CHUNK))
 
         stream.stop_stream()
@@ -99,8 +95,7 @@ class Recorder:
         csv_filename = os.path.splitext(filepath)[0] + '.csv'
 
         with open(csv_filename, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['시작 시간 (초)', '인식된 텍스트'])
+            f.write('시작 시간 (초),인식된 텍스트\n')
 
             for i, (start_ms, end_ms) in enumerate(nonsilent_ranges):
                 chunk = audio[start_ms:end_ms]
@@ -111,7 +106,7 @@ class Recorder:
                     with sr.AudioFile(chunk_filename) as source:
                         audio_data = recognizer.record(source)
                         text = recognizer.recognize_google(audio_data, language='ko-KR')
-                        writer.writerow([f'{start_ms/1000:.2f}', text])
+                        f.write(f'{start_ms/1000:.2f},{text}\n')
                 except sr.UnknownValueError:
                     print(f'🔇 인식 실패 (청크 {i})')
                 except sr.RequestError as e:
@@ -192,9 +187,9 @@ def search_in_csv_files(keyword):
 
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
-                reader = csv.reader(f)
-                next(reader, None)
-                for row in reader:
+                next(f)
+                for line in f:
+                    row = line.split(',')
                     if len(row) < 2:
                         continue
                     if keyword in row[1]:
