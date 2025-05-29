@@ -24,9 +24,6 @@ class Recorder:
         self._ensure_record_folder()
         self.audio = pyaudio.PyAudio()
 
-    def __del__(self):
-        self.audio.terminate()
-
     def _ensure_record_folder(self):
         os.makedirs(RECORD_FOLDER, exist_ok=True)
 
@@ -35,13 +32,17 @@ class Recorder:
         self.stop_recording = True
 
     def record(self):
-        stream = self.audio.open(
-            format=FORMAT,
-            channels=CHANNELS,
-            rate=RATE,
-            input=True,
-            frames_per_buffer=CHUNK
-        )
+        try:
+            stream = self.audio.open(
+                format=FORMAT,
+                channels=CHANNELS,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=CHUNK
+            )
+        except Exception as e:
+            print(f'❗ 마이크를 열 수 없습니다: {e}')
+            return
 
         print('🎙️  녹음을 시작합니다. 최대 60초 또는 엔터 입력 시 종료됩니다.')
         input_thread = threading.Thread(target=self._wait_for_input)
@@ -79,7 +80,11 @@ class Recorder:
 
     def transcribe_audio_to_csv(self, filepath):
         recognizer = sr.Recognizer()
-        audio = AudioSegment.from_wav(filepath)
+        try:
+            audio = AudioSegment.from_wav(filepath)
+        except Exception as e:
+            print(f'❗ 오디오 파일 로딩 실패: {e}')
+            return
 
         min_silence_len = 700
         silence_thresh = audio.dBFS - 16
@@ -108,9 +113,9 @@ class Recorder:
                         text = recognizer.recognize_google(audio_data, language='ko-KR')
                         writer.writerow([f'{start_ms/1000:.2f}', text])
                 except sr.UnknownValueError:
-                    pass
+                    print(f'🔇 인식 실패 (청크 {i})')
                 except sr.RequestError as e:
-                    print(f'❗ STT 요청 실패: {e}')
+                    print(f'❗ STT 서버 오류 (청크 {i}): {e}')
                 finally:
                     if os.path.exists(chunk_filename):
                         os.remove(chunk_filename)
@@ -130,15 +135,17 @@ def parse_partial_date(date_str, is_start=True):
         else:
             raise ValueError
     except ValueError:
-        raise ValueError
+        raise ValueError('날짜 형식이 잘못되었습니다. YYYY, YYYYMM, YYYYMMDD 형식으로 입력하세요.')
 
 def parse_date_range(date_range_str):
-    try:
-        if not date_range_str:
-            return datetime.datetime.min, datetime.datetime.max
-        if '~' not in date_range_str:
-            raise ValueError
+    date_range_str = date_range_str.strip()
+    if not date_range_str:
+        return datetime.datetime.min, datetime.datetime.max
+    if '~' in date_range_str:
         start_str, end_str = map(str.strip, date_range_str.split('~'))
+    else:
+        start_str, end_str = date_range_str, date_range_str
+    try:
         start_date = parse_partial_date(start_str, True) if start_str else datetime.datetime.min
         end_date = parse_partial_date(end_str, False) if end_str else datetime.datetime.max
         return start_date, end_date
@@ -146,7 +153,7 @@ def parse_date_range(date_range_str):
         print(f'❗ 날짜 형식 오류: {e}')
         return None, None
 
-def list_recordings(start_date, end_date):
+def list_recordings(start_date, end_date, print_info=True):
     if not os.path.exists(RECORD_FOLDER):
         print('❗ 녹음 폴더가 존재하지 않습니다.')
         return []
@@ -162,13 +169,13 @@ def list_recordings(start_date, end_date):
             except ValueError:
                 continue
 
-    if recordings:
-        print(f'\n📜 {start_date.strftime("%Y-%m-%d")} ~ {end_date.strftime("%Y-%m-%d")} 녹음 목록:')
-        for idx, rec in enumerate(sorted(recordings), 1):
-            print(f'{idx}. {rec}')
-    else:
-        print('❗ 해당 기간에 녹음된 파일이 없습니다.')
-
+    if not recordings:
+        print('❗ 해당 날짜 범위에 녹음된 파일이 없습니다.')
+        return []
+    if print_info:
+        print(f'📂 {len(recordings)}개의 녹음 파일이 발견되었습니다:')
+        for recording in recordings:
+            print(f'  - {recording}')
     return recordings
 
 def search_in_csv_files(keyword):
@@ -217,20 +224,20 @@ def main():
             if choice == '1':
                 recorder.record()
             elif choice == '2':
-                date_input = input('녹음 파일의 날짜 범위를 입력하세요 (YYYYMMDD ~ YYYYMMDD): ').strip()
+                date_input = input('녹음 파일의 날짜 범위를 입력하세요 (YYYYMMDD ~ YYYYMMDD): ')
                 start_date, end_date = parse_date_range(date_input)
                 if start_date and end_date:
                     list_recordings(start_date, end_date)
             elif choice == '3':
-                date_input = input('녹음 파일의 날짜 범위를 입력하세요 (YYYYMMDD ~ YYYYMMDD): ').strip()
+                date_input = input('녹음 파일의 날짜 범위를 입력하세요 (YYYYMMDD ~ YYYYMMDD): ')
                 start_date, end_date = parse_date_range(date_input)
                 if start_date and end_date:
-                    recordings = list_recordings(start_date, end_date)
+                    recordings = list_recordings(start_date, end_date, print_info=False)
                     for recording in recordings:
                         filepath = os.path.join(RECORD_FOLDER, recording)
                         recorder.transcribe_audio_to_csv(filepath)
             elif choice == '4':
-                keyword = input('🔍 검색할 키워드를 입력하세요: ').strip()
+                keyword = input('🔍 검색할 키워드를 입력하세요: ')
                 search_in_csv_files(keyword)
             elif choice == '5':
                 print('❇️  프로그램을 종료합니다.')
@@ -239,6 +246,8 @@ def main():
                 print('❗ 잘못된 선택입니다. 다시 시도해주세요.')
     except KeyboardInterrupt:
         print('\n❇️  사용자 요청으로 프로그램을 종료합니다.')
+    finally:
+        recorder.audio.terminate()
 
 if __name__ == '__main__':
     main()
