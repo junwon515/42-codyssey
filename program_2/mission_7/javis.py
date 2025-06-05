@@ -86,7 +86,17 @@ class Recorder:
             print(f'❗ 오디오 파일 로딩 실패: {e}')
             return
         
-        samples = array.array('h', audio)
+        if sample_width == 1:
+            type_code = 'b'
+        elif sample_width == 2:
+            type_code = 'h'
+        elif sample_width == 4:
+            type_code = 'i'
+        else:
+            print('❗ 지원하지 않는 샘플 폭입니다. 1, 2, 4 바이트만 지원합니다.')
+            return
+        
+        samples = array.array(type_code, audio)
         max_sample = 2 ** (sample_width * 8 - 1)
 
         if n_channels > 1:
