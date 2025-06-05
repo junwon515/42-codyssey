@@ -4,7 +4,8 @@ import datetime
 import wave
 import pyaudio
 import speech_recognition as sr
-from pydub import AudioSegment, silence
+import math
+import array
 
 PARENT_PATH = os.path.dirname(os.path.abspath(__file__))
 RECORD_FOLDER = os.path.join(PARENT_PATH, 'records/')
@@ -75,47 +76,89 @@ class Recorder:
             print(f'❗ 파일 저장 실패: {e}')
 
     def transcribe_audio_to_csv(self, filepath):
-        recognizer = sr.Recognizer()
         try:
-            audio = AudioSegment.from_wav(filepath)
+            with wave.open(filepath, 'rb') as wf:
+                audio = wf.readframes(wf.getnframes())
+                sample_width = wf.getsampwidth()
+                n_channels = wf.getnchannels()
+                frame_rate = wf.getframerate()
         except Exception as e:
             print(f'❗ 오디오 파일 로딩 실패: {e}')
             return
+        
+        samples = array.array('h', audio)
+        max_sample = 2 ** (sample_width * 8 - 1)
 
-        min_silence_len = 700
-        silence_thresh = audio.dBFS - 16
+        if n_channels > 1:
+            samples = samples[::n_channels]
 
-        nonsilent_ranges = silence.detect_nonsilent(
-            audio,
-            min_silence_len=min_silence_len,
-            silence_thresh=silence_thresh
-        )
+        silence_threshold = self._calculate_dbfs(samples, max_sample) - 40
+        min_silence_chunks = int((frame_rate * 0.7) / CHUNK)
+
+        nonsilent_ranges = []
+        start = None
+        silent_count = 0
+
+        for i in range(0, len(samples), CHUNK):
+            chunk = samples[i:i + CHUNK]
+            if not chunk:
+                break
+            dbfs = self._calculate_dbfs(chunk, max_sample)
+
+            if dbfs > silence_threshold:
+                if start is None:
+                    start = i
+                silent_count = 0
+            else:
+                if start is not None:
+                    silent_count += 1
+                    if silent_count >= min_silence_chunks:
+                        nonsilent_ranges.append((start, i))
+                        start = None
+                        silent_count = 0
+
+        if start is not None:
+            nonsilent_ranges.append((start, len(samples)))
 
         base_filename = os.path.splitext(os.path.basename(filepath))[0]
         csv_filename = os.path.splitext(filepath)[0] + '.csv'
+        recognizer = sr.Recognizer()
 
         with open(csv_filename, 'w', newline='', encoding='utf-8') as f:
             f.write('시작 시간 (초),인식된 텍스트\n')
 
-            for i, (start_ms, end_ms) in enumerate(nonsilent_ranges):
-                chunk = audio[start_ms:end_ms]
-                chunk_filename = os.path.join(RECORD_FOLDER, f'{base_filename}_chunk_{i}.wav')
-                chunk.export(chunk_filename, format='wav')
+            for i, (start_sample, end_sample) in enumerate(nonsilent_ranges):
+                chunk_filename = f'{base_filename}_chunk_{i}.wav'
 
                 try:
+                    with wave.open(chunk_filename, 'wb') as wf:
+                        wf.setnchannels(1)
+                        wf.setsampwidth(sample_width)
+                        wf.setframerate(frame_rate)
+                        wf.writeframes(samples[start_sample:end_sample].tobytes())
+
                     with sr.AudioFile(chunk_filename) as source:
                         audio_data = recognizer.record(source)
                         text = recognizer.recognize_google(audio_data, language='ko-KR')
-                        f.write(f'{start_ms/1000:.2f},{text}\n')
+                        f.write(f'{start_sample/frame_rate:.2f},{text}\n')
                 except sr.UnknownValueError:
                     print(f'🔇 인식 실패 (청크 {i})')
                 except sr.RequestError as e:
                     print(f'❗ STT 서버 오류 (청크 {i}): {e}')
+                except Exception as e:
+                    print(f'❗ 청크 {i} 처리 중 오류 발생: {e}')
                 finally:
                     if os.path.exists(chunk_filename):
                         os.remove(chunk_filename)
 
         print(f'📝 텍스트 추출 완료. CSV 저장됨: {csv_filename}')
+
+    def _calculate_dbfs(self, samples, max_sample):
+        if not samples:
+            return -float('inf')
+        rms = sum(sample ** 2 for sample in samples) / len(samples) ** 0.5
+        dbfs = 20 * math.log10(rms / max_sample) if rms > 0 else -float('inf')
+        return dbfs
 
 def parse_partial_date(date_str, is_start=True):
     try:
