@@ -3,6 +3,7 @@ PASSWORD_PATH = PARENT_PATH + 'password.txt'
 RESULT_PATH = PARENT_PATH + 'result.txt'
 DICTIONARY_PATH = PARENT_PATH + 'dictionary.txt'
 
+
 def caesar_cipher_decode(target_text, shift):
     decoded_text = ''
     for char in target_text:
@@ -14,9 +15,10 @@ def caesar_cipher_decode(target_text, shift):
             decoded_text += char
     return decoded_text
 
+
 def read_password():
     try:
-        with open(PASSWORD_PATH, 'r') as f:
+        with open(PASSWORD_PATH) as f:
             password = f.read().strip()
         return password
     except FileNotFoundError:
@@ -24,16 +26,18 @@ def read_password():
     except Exception as e:
         print(f'❌ An error occurred while reading the password file: {e}')
     return None
-    
+
+
 def read_dictionary():
     try:
-        with open(DICTIONARY_PATH, 'r') as f:
+        with open(DICTIONARY_PATH) as f:
             return [line.strip().lower() for line in f if line.strip()]
     except FileNotFoundError:
         print(f'❌ Error: The file {DICTIONARY_PATH} was not found.')
     except Exception as e:
         print(f'❌ An error occurred while reading the dictionary file: {e}')
     return None
+
 
 def write_result(result):
     try:
@@ -43,11 +47,12 @@ def write_result(result):
     except Exception as e:
         print(f'❌ An error occurred while writing to the result file: {e}')
 
+
 def auto_decode_password(password):
     dictionary = read_dictionary()
     if dictionary is None:
         return False
-    
+
     print('\n🔍 Trying to decode the password using dictionary match...')
     for shift in range(1, 27):
         decoded_text = caesar_cipher_decode(password, shift)
@@ -56,12 +61,17 @@ def auto_decode_password(password):
         if found_words:
             print(f'\n🔑 Found potential match (Shift {shift}): {decoded_text}')
             print(f'📚 Matched words: {", ".join(found_words)}')
-            choice = input('💾 Do you want to save this decoded password? (y/n): ').strip().lower()
+            choice = (
+                input('💾 Do you want to save this decoded password? (y/n): ')
+                .strip()
+                .lower()
+            )
             if choice in ('y', 'yes'):
                 write_result(decoded_text)
                 return True
 
     return False
+
 
 def manual_decode_password(password):
     print('\n🔍 Listing all possible Caesar cipher shifts (1-26):')
@@ -81,20 +91,28 @@ def manual_decode_password(password):
     except ValueError:
         print('❌ Error: Please enter a valid integer for the shift value.')
 
+
 def main():
     password = read_password()
     if password is None:
         return
-    
+
     print(f'\n🔐 Encrypted password: {password}')
-    choice = input('\n🤖 Would you like the program to try decoding it automatically? (y/n): ').strip().lower()
+    choice = (
+        input(
+            '\n🤖 Would you like the program to try decoding it automatically? (y/n): '
+        )
+        .strip()
+        .lower()
+    )
 
     if choice in ('y', 'yes'):
         if auto_decode_password(password):
             return
         print('\n🤖 No matches found. You can try decoding it manually.')
-        
+
     manual_decode_password(password)
+
 
 if __name__ == '__main__':
     main()

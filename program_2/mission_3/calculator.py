@@ -1,7 +1,8 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QPushButton, QLineEdit
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QApplication, QGridLayout, QLineEdit, QPushButton, QWidget
 
 
 class Calculator(QWidget):
@@ -20,16 +21,32 @@ class Calculator(QWidget):
         self.display.setAlignment(Qt.AlignBottom | Qt.AlignRight)
         self.display.setReadOnly(True)
         self.display.setFixedHeight(300)
-        self.display.setStyleSheet('background-color: black; color: white; border: none;')
+        self.display.setStyleSheet(
+            'background-color: black; color: white; border: none;'
+        )
         self.display.setFont(QFont('Helvetica', 50))
         layout.addWidget(self.display, 0, 0, 1, 4)
 
         buttons = [
-            ('AC', 'gray'), ('+/-', 'gray'), ('%', 'gray'), ('÷', 'orange'),
-            ('7', 'dark'), ('8', 'dark'), ('9', 'dark'), ('×', 'orange'),
-            ('4', 'dark'), ('5', 'dark'), ('6', 'dark'), ('−', 'orange'),
-            ('1', 'dark'), ('2', 'dark'), ('3', 'dark'), ('+', 'orange'),
-            ('0', 'dark2', 2), ('.', 'dark'), ('=', 'orange')
+            ('AC', 'gray'),
+            ('+/-', 'gray'),
+            ('%', 'gray'),
+            ('÷', 'orange'),
+            ('7', 'dark'),
+            ('8', 'dark'),
+            ('9', 'dark'),
+            ('×', 'orange'),
+            ('4', 'dark'),
+            ('5', 'dark'),
+            ('6', 'dark'),
+            ('−', 'orange'),
+            ('1', 'dark'),
+            ('2', 'dark'),
+            ('3', 'dark'),
+            ('+', 'orange'),
+            ('0', 'dark2', 2),
+            ('.', 'dark'),
+            ('=', 'orange'),
         ]
 
         row = 1
@@ -94,11 +111,11 @@ class Calculator(QWidget):
             if self.current == '' and self.operand is not None:
                 self.current = str(self.operand)
                 self.operator = ''
-        
+
             value = float(self.current)
             self.current = str(-value)
             self.updateDisplay(self.current)
-        except:
+        except Exception:
             self.updateDisplay('Error')
 
     def percent(self):
@@ -108,9 +125,9 @@ class Calculator(QWidget):
                 self.operator = ''
 
             value = float(self.current)
-            self.current = str(round(value/100, 6))
+            self.current = str(round(value / 100, 6))
             self.updateDisplay(self.current)
-        except:
+        except Exception:
             self.updateDisplay('Error')
 
     def calculate(self):
@@ -125,7 +142,7 @@ class Calculator(QWidget):
                 else:
                     self.operand = float(self.current)
                 self.current = ''
-            except:
+            except Exception:
                 self.reset()
                 self.updateDisplay('Error')
 
@@ -142,7 +159,7 @@ class Calculator(QWidget):
                 return f'{sign}{formatted_integer}.{decimal}'
             else:
                 return f'{int(number_str):,}'
-        except:
+        except Exception:
             return number_str
 
     def updateDisplay(self, number_str):
@@ -191,6 +208,7 @@ class Calculator(QWidget):
             self.negative_positive()
         elif text == '%':
             self.percent()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

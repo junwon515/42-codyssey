@@ -1,18 +1,15 @@
-import mysql.connector
 import matplotlib.pyplot as plt
-
+import mysql.connector
 
 PARENT_PATH = 'program_3/mission_5/'
 CSV_FILE_PATH = PARENT_PATH + 'mars_weathers_data.CSV'
 RESULTS_PATH = PARENT_PATH + 'mars_weather_summary.png'
 
+
 class MySQLHelper:
     def __init__(self, host, user, password, database):
         self.connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=host, user=user, password=password, database=database
         )
         self.cursor = self.connection.cursor()
 
@@ -39,7 +36,7 @@ class MySQLHelper:
 def read_csv(file_path):
     data = []
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
     except FileNotFoundError:
         return []
@@ -70,10 +67,10 @@ def read_csv(file_path):
 
 
 def insert_data(db_helper, data):
-    insert_query = '''
+    insert_query = """
         INSERT INTO mars_weather (mars_date, temp, storm)
         VALUES (%s, %s, %s)
-    '''
+    """
     # for row in data:
     #     try:
     #         db_helper.execute(insert_query, row)
@@ -84,21 +81,39 @@ def insert_data(db_helper, data):
 
 
 def visualize_data(db_helper):
-    db_helper.execute('SELECT mars_date, temp, storm FROM mars_weather ORDER BY mars_date')
+    db_helper.execute(
+        'SELECT mars_date, temp, storm FROM mars_weather ORDER BY mars_date'
+    )
     rows = db_helper.fetchall()
-    dates, temps, storms = zip(*rows)
+    dates, temps, storms = zip(*rows, strict=False)
     print(f'Fetched {len(rows)} records from the database')
 
     fig, ax1 = plt.subplots(figsize=(30, 6))
 
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Temperature (°C)', color='tab:blue')
-    ax1.plot(dates, temps, color='tab:blue', marker='o', markersize=3, linewidth=1, label='Temperature')
+    ax1.plot(
+        dates,
+        temps,
+        color='tab:blue',
+        marker='o',
+        markersize=3,
+        linewidth=1,
+        label='Temperature',
+    )
     ax1.tick_params(axis='y', labelcolor='tab:blue')
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('Storm Level', color='tab:red')
-    ax2.plot(dates, storms, color='tab:red', marker='x', markersize=3, linewidth=1, label='Storm')
+    ax2.plot(
+        dates,
+        storms,
+        color='tab:red',
+        marker='x',
+        markersize=3,
+        linewidth=1,
+        label='Storm',
+    )
     ax2.tick_params(axis='y', labelcolor='tab:red')
 
     plt.title('Mars Weather: Temperature & Storm Over Time')
@@ -111,10 +126,7 @@ def visualize_data(db_helper):
 def main():
     try:
         db_helper = MySQLHelper(
-            host='localhost',
-            user='mars',
-            password='mars',
-            database='mars_db'
+            host='localhost', user='mars', password='mars', database='mars_db'
         )
 
         data = read_csv(CSV_FILE_PATH)

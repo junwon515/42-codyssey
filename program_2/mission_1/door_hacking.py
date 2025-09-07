@@ -1,5 +1,5 @@
-import zipfile
 import time
+import zipfile
 
 PARENT_PATH = 'program_2/mission_1/'
 ZIP_PATH = PARENT_PATH + 'emergency_storage_key.zip'
@@ -9,6 +9,7 @@ CHAR_GROUP = 'etaoinshrdlucmfwypvbgkqjxz'
 NUMERIC = '0123456789'
 MAX_LENGTH = 6
 MIN_LENGTH = 4
+
 
 def unlock_zip():
     try:
@@ -30,33 +31,42 @@ def unlock_zip():
         try:
             zip_file.read(zip_file.namelist()[0], pwd=bytes(pwd, 'utf-8'))
             duration = time.time() - start_time
-            print(f'[{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}] '
-                  f'Trying: {pwd} | Attempts: {attempts//1000}K | Time: {duration:.2f}s', end='\r')
+            print(
+                f'[{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}] '
+                f'Trying: {pwd} | Attempts: {attempts // 1000}K | Time: {duration:.2f}s',
+                end='\r',
+            )
             print(f'\n✅ Password found: {pwd}')
             print(f'🔁 Total attempts: {attempts}')
             print(f'⏱ Time taken: {duration:.2f} seconds')
             write_password(pwd)
             return True
-        except:
+        except Exception:
             if attempts % 1000 == 0:
                 elapsed = time.time() - start_time
-                print(f'[{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}] '
-                      f'Trying: {pwd} | Attempts: {attempts//1000}K | Time: {elapsed:.2f}s', end='\r')
+                print(
+                    f'[{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}] '
+                    f'Trying: {pwd} | Attempts: {attempts // 1000}K | Time: {elapsed:.2f}s',
+                    end='\r',
+                )
             return False
 
     for length in range(MIN_LENGTH, MAX_LENGTH + 1):
         # A. 숫자만 조합해서 시도 (예: 1234, 567890)
         for num in generate_combinations(NUMERIC, length):
-            if try_password(num): return
+            if try_password(num):
+                return
 
         # B. 문자 기반 패턴 시도
         for i in range(1, len(CHAR_GROUP) + 1):
-            current_charset = CHAR_GROUP[:i] # 자주 쓰이는 문자 빈도 순으로 확장
-            new_char = CHAR_GROUP[i - 1] # 현재 확장된 문자 중 마지막 문자
+            current_charset = CHAR_GROUP[:i]  # 자주 쓰이는 문자 빈도 순으로 확장
+            new_char = CHAR_GROUP[i - 1]  # 현재 확장된 문자 중 마지막 문자
 
             for j in range(0, length):
-                is_alphabet_pattern = (j == 0) # 알파벳 패턴 체크
-                is_cross_pattern = True if j > 1 and (j * 2 == length) else False # 교차형 패턴 체크
+                is_alphabet_pattern = j == 0  # 알파벳 패턴 체크
+                is_cross_pattern = (
+                    True if j > 1 and (j * 2 == length) else False
+                )  # 교차형 패턴 체크
                 # pwd_base는 현재 문자셋으로 만든 (length - j - 1) 길이의 문자열
                 for pwd_base in generate_combinations(current_charset, length - j - 1):
                     for k in range(0, length - j):
@@ -65,19 +75,32 @@ def unlock_zip():
 
                         # B1. 문자 패턴 (문자열만)
                         if is_alphabet_pattern:
-                            if try_password(pwd): return
+                            if try_password(pwd):
+                                return
                             continue
 
-                        for num in generate_combinations(NUMERIC, j):                            
+                        for num in generate_combinations(NUMERIC, j):
                             # B2. 문자 + 숫자 패턴 (문자열 뒤에 숫자)
-                            if try_password(pwd + num): return
+                            if try_password(pwd + num):
+                                return
                             # B3. 숫자 + 문자 패턴 (숫자 뒤에 문자열)
-                            if try_password(num + pwd): return
+                            if try_password(num + pwd):
+                                return
 
                             # B4. 교차형 패턴 (문자+숫자+문자+숫자 ...)
                             if is_cross_pattern:
-                                if try_password(''.join(x + y for x, y in zip(pwd, num))): return
-                                if try_password(''.join(x + y for x, y in zip(num, pwd))): return
+                                if try_password(
+                                    ''.join(
+                                        x + y for x, y in zip(pwd, num, strict=False)
+                                    )
+                                ):
+                                    return
+                                if try_password(
+                                    ''.join(
+                                        x + y for x, y in zip(num, pwd, strict=False)
+                                    )
+                                ):
+                                    return
 
     for length in range(MIN_LENGTH, MAX_LENGTH + 1):
         # C. A, B 패턴 외 모든 가능한 문자+숫자 조합 시도
@@ -91,12 +114,15 @@ def unlock_zip():
                     pwd = pwd_base[:j] + new_char + pwd_base[j:]
 
                     # check_pattern을 통해 이미 시도된 A/B 패턴이면 스킵
-                    if check_pattern(pwd): continue
-                    
-                    # 새로운 패턴이므로 시도
-                    if try_password(pwd): return
+                    if check_pattern(pwd):
+                        continue
 
-    print("\n❇️  Password not found.")
+                    # 새로운 패턴이므로 시도
+                    if try_password(pwd):
+                        return
+
+    print('\n❇️  Password not found.')
+
 
 def generate_combinations(charset, length):
     if length == 0:
@@ -105,6 +131,7 @@ def generate_combinations(charset, length):
         for char in charset:
             for pwd in generate_combinations(charset, length - 1):
                 yield char + pwd
+
 
 def check_pattern(pwd):
     if pwd.isdigit() or pwd.isalpha():
@@ -139,8 +166,10 @@ def check_pattern(pwd):
 
     return check_alternate(True) or check_alternate(False)
 
+
 def read_password():
     pass
+
 
 def write_password(password):
     try:
@@ -148,6 +177,7 @@ def write_password(password):
             f.write(password)
     except Exception as e:
         print(f'❌ Failed to write password: {e}')
+
 
 if __name__ == '__main__':
     unlock_zip()
