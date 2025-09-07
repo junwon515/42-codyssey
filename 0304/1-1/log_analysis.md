@@ -52,5 +52,5 @@ The oxygen tank instability reported at **11:35 AM** suggests a structural or pr
 The mission was largely successful, but the **oxygen tank explosion** post-landing is a critical issue that requires further investigation. Implementing the above recommendations will enhance safety and prevent similar incidents in future missions.
 
 ---
-**Report Prepared by:** Dr. Songhee Han  
+**Report Prepared by:** Dr. Songhee Han
 **Date:** August 27, 2023
