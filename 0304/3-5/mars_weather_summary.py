@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import mysql.connector
 
-PARENT_PATH = 'program_3/mission_5/'
+PARENT_PATH = '0304/3-5/'
 CSV_FILE_PATH = PARENT_PATH + 'mars_weathers_data.CSV'
 RESULTS_PATH = PARENT_PATH + 'mars_weather_summary.png'
 

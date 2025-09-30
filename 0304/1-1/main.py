@@ -1,7 +1,7 @@
 print('\nHello Mars')
 
 # 파일 경로 설정
-PARENT_PATH = 'program_1/mission_1/'
+PARENT_PATH = '0304/1-1/'
 MAIN_LOG_PATH = PARENT_PATH + 'mission_computer_main.log'
 ISSUE_LOG_PATH = PARENT_PATH + 'mission_computer_issue.log'
 JSON_LOG_PATH = PARENT_PATH + 'mission_computer_main.json'

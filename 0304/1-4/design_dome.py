@@ -1,6 +1,6 @@
 import numpy as np
 
-PARENT_PATH = 'program_1/mission_4/'
+PARENT_PATH = '0304/1-4/'
 MAIN_PATH = PARENT_PATH + 'mars_base_main_parts-'
 PARTS_PATH = PARENT_PATH + 'parts_to_work_on.csv'
 

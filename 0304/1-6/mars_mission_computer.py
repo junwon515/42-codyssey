@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 import psutil
 
-PARENT_PATH = 'program_1/mission_6/'
+PARENT_PATH = '0304/1-6/'
 LOG_PATH = PARENT_PATH + 'mars_mission_computer.log'
 SETTING_PATH = PARENT_PATH + 'setting.txt'
 

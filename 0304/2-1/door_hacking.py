@@ -1,7 +1,7 @@
 import time
 import zipfile
 
-PARENT_PATH = 'program_2/mission_1/'
+PARENT_PATH = '0304/2-1/'
 ZIP_PATH = PARENT_PATH + 'emergency_storage_key.zip'
 PASSWORD_PATH = PARENT_PATH + 'password.txt'
 

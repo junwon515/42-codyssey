@@ -1,4 +1,4 @@
-PARENT_PATH = 'program_2/mission_2/'
+PARENT_PATH = '0304/2-2/'
 PASSWORD_PATH = PARENT_PATH + 'password.txt'
 RESULT_PATH = PARENT_PATH + 'result.txt'
 DICTIONARY_PATH = PARENT_PATH + 'dictionary.txt'

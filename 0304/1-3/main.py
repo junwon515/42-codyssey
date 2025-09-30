@@ -1,5 +1,5 @@
 # 파일 경로 설정
-PARENT_PATH = 'program_1/mission_3/'
+PARENT_PATH = '0304/1-3/'
 INVENTORY_LIST_PATH = PARENT_PATH + 'Mars_Base_Inventory_List.csv'
 INVENTORY_DANGER_PATH = PARENT_PATH + 'Mars_Base_Inventory_danger.csv'
 BIN_INVENTORY_LIST_PATH = PARENT_PATH + 'Mars_Base_Inventory_List.bin'
