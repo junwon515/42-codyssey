@@ -107,7 +107,6 @@ def get_naver_weather():
 def setup_driver(use_manager=True, driver_path=None):
     options = Options()
     options.add_argument('--headless=new')
-    options.add_argument('--window-size=1920,1080')
     options.add_argument('--log-level=3')
     options.add_experimental_option(
         'excludeSwitches', ['enable-logging', 'enable-automation']
@@ -143,31 +142,37 @@ def login_naver(driver, user_id, user_pw):
 
         driver.execute_script('arguments[0].value = arguments[1];', id_el, user_id)
         driver.execute_script('arguments[0].value = arguments[1];', pw_el, user_pw)
+        driver.find_element(By.ID, 'log.login').click()
 
-        try:
-            driver.find_element(By.ID, 'log.login').click()
-        except Exception:
-            try:
-                driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-            except Exception:
-                print('⚠️ 로그인 버튼을 찾지 못했습니다.')
-                return False
-
-        print('\n--- ⚠️ 사용자 확인 필요 ---')
-        input(
-            '2단계 인증(2FA)이 설정된 경우, 브라우저에서 인증을 완료한 후 터미널에서 Enter를 누르세요.\n'
-            '2단계 인증이 없다면 바로 Enter를 누르세요...'
+        combined_locator = (
+            By.XPATH,
+            "//*[@id='query'] | "
+            "//*[contains(text(), '2단계 인증')] | "
+            "//*[contains(text(), '새로운 기기')]",
         )
-        print('--------------------------\n')
 
-        if 'nid.naver.com' in driver.current_url:
-            print(
-                '⚠️ 로그인 페이지에 머물러 있습니다. 아이디/비밀번호를 확인하거나 CAPTCHA를 해결해주세요.'
+        wait.until(EC.presence_of_element_located(combined_locator))
+
+        if driver.find_elements(By.ID, 'query'):
+            print('✅ 로그인이 성공적으로 처리되었습니다.')
+            return True
+
+        elif driver.find_elements(By.XPATH, "//*[contains(text(), '2단계 인증')]"):
+            print('\n--- ⚠️ 2단계 인증(2FA) 필요 ---')
+            input('브라우저에서 인증을 완료한 후 터미널에서 Enter를 누르세요...\n')
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, 'query'))
             )
-            return False
+            print('✅ 2단계 인증 후 로그인 성공!')
+            return True
 
-        print('✅ 로그인이 성공적으로 처리되었습니다.')
-        return True
+        elif driver.find_elements(By.XPATH, "//*[contains(text(), '새로운 기기')]"):
+            print('✅ 로그인 성공 (브라우저 등록 페이지 진입)')
+            return True
+
+        print('⚠️ 로그인 페이지에 머물러 있습니다. CAPTCHA 등을 확인해주세요.')
+        return False
 
     except TimeoutException:
         print('❌ 로그인 필드 로딩 시간 초과')
