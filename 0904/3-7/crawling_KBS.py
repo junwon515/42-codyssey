@@ -11,8 +11,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-NAVER_ID = ''
-NAVER_PW = ''
+from config import settings
+
 DRIVER_PATH = ''
 
 KBS_NEWS_URL = 'https://news.kbs.co.kr/news/pc/main/main.html'
@@ -232,8 +232,8 @@ def main() -> None:
     if not driver:
         return
 
-    naver_id = NAVER_ID or None
-    naver_pw = NAVER_PW or None
+    naver_id = settings.NAVER_ID or None
+    naver_pw = settings.NAVER_PW or None
     if not naver_id or not naver_pw:
         print('⚠️ 네이버 아이디/비밀번호가 설정되지 않았습니다. 입력을 요청합니다.')
         naver_id = naver_id or input('네이버 아이디: ')
