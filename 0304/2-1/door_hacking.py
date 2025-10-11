@@ -64,9 +64,7 @@ def unlock_zip():
 
             for j in range(0, length):
                 is_alphabet_pattern = j == 0  # 알파벳 패턴 체크
-                is_cross_pattern = (
-                    True if j > 1 and (j * 2 == length) else False
-                )  # 교차형 패턴 체크
+                is_cross_pattern = bool(j > 1 and (j * 2 == length))  # 교차형 패턴 체크
                 # pwd_base는 현재 문자셋으로 만든 (length - j - 1) 길이의 문자열
                 for pwd_base in generate_combinations(current_charset, length - j - 1):
                     for k in range(0, length - j):

@@ -192,7 +192,7 @@ def main():
             break
         else:
             print(
-                f"오류: 'gmail' 또는 'naver' 중에서 선택해주세요. ({i-1}번 기회 남음)"
+                f"오류: 'gmail' 또는 'naver' 중에서 선택해주세요. ({i - 1}번 기회 남음)"
             )
 
     if not smtp_info:

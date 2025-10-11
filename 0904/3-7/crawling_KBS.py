@@ -115,7 +115,7 @@ def setup_driver(use_manager=True, driver_path=None):
     options.add_experimental_option(
         'excludeSwitches', ['enable-logging', 'enable-automation']
     )
-    options.add_argument(f"user-agent={DEFAULT_HEADERS['User-Agent']}")
+    options.add_argument(f'user-agent={DEFAULT_HEADERS["User-Agent"]}')
 
     try:
         if use_manager:

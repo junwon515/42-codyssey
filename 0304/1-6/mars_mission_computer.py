@@ -73,7 +73,7 @@ class DummySensor:
                         ','.join(
                             [
                                 header.replace('mars_base_', '')
-                                for header in self.env_values.keys()
+                                for header in self.env_values
                             ]
                         )
                         + '\n'
@@ -248,8 +248,8 @@ class MissionComputer:
 
 def run_instance(env, stop_event):
     """인스턴스를 실행한다."""
-    runComputer = MissionComputer(env)
-    runComputer.start()
+    run_computer = MissionComputer(env)
+    run_computer.start()
 
     try:
         while not stop_event.is_set():

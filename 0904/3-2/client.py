@@ -1,16 +1,10 @@
 import socket
 import threading
+from contextlib import suppress
 
 HOST = '127.0.0.1'
 PORT = 9999
 RECV_BUF = 1024
-
-
-def safe_send(sock: socket.socket, text: str):
-    try:
-        sock.send(text.encode('utf-8'))
-    except OSError:
-        pass
 
 
 def receiver(sock: socket.socket, stop_event: threading.Event):
@@ -51,18 +45,19 @@ def start_client():
             if not line.strip():
                 continue
             if line == '/종료':
-                safe_send(client_socket, line)
+                with suppress(OSError):
+                    client_socket.send(line.encode('utf-8'))
                 break
-            safe_send(client_socket, line)
+            with suppress(OSError):
+                client_socket.send(line.encode('utf-8'))
     except KeyboardInterrupt:
         print('\n[알림] 사용자 종료')
     finally:
         stop_event.set()
 
-    try:
+    with suppress(OSError):
         client_socket.shutdown(socket.SHUT_RDWR)
-    except OSError:
-        pass
+
     client_socket.close()
     receive_thread.join(timeout=0.5)
 

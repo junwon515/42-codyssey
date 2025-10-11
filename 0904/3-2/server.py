@@ -1,5 +1,6 @@
 import socket
 import threading
+from contextlib import suppress
 
 HOST = '127.0.0.1'
 PORT = 9999
@@ -21,7 +22,7 @@ def send_to(socket: socket.socket, text: str):
 
 def broadcast(text: str, exclude: socket.socket | None = None):
     with lock:
-        targets = [s for s in clients.keys() if s is not exclude]
+        targets = [s for s in clients if s is not exclude]
     if not targets:
         return
     dead: list[socket.socket] = []
@@ -47,10 +48,9 @@ def remove_client(client_socket: socket.socket, announce: bool = True):
         print(f"[알림] '{username}'님이 퇴장하셨습니다.")
         if announce:
             broadcast(f"[알림] '{username}'님이 퇴장하셨습니다.")
-    try:
+
+    with suppress(OSError):
         client_socket.close()
-    except OSError:
-        pass
 
 
 def prompt_username(client_socket: socket.socket) -> str | None:

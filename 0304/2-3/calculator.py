@@ -49,6 +49,13 @@ class Calculator(QWidget):
             ('=', 'orange'),
         ]
 
+        button_styles = {
+            'gray': 'background-color: #A5A5A5; color: black; border-radius: 65px;',
+            'orange': 'background-color: #FF9500; color: white; border-radius: 65px;',
+            'dark': 'background-color: #333333; color: white; border-radius: 65px;',
+            'dark2': 'background-color: #333333; color: white; border-radius: 65px; text-align: left; padding-left: 45px;',
+        }
+
         row = 1
         col = 0
 
@@ -60,7 +67,7 @@ class Calculator(QWidget):
             button = QPushButton(text)
             button.setFixedSize(130 * colspan, 130)
             button.setFont(QFont('Helvetica', 25))
-            button.setStyleSheet(self.buttonStyle(color))
+            button.setStyleSheet(button_styles[color])
 
             layout.addWidget(button, row, col, 1, colspan)
             col += colspan
@@ -69,16 +76,6 @@ class Calculator(QWidget):
                 row += 1
 
             button.clicked.connect(self.onButtonClick)
-
-    def buttonStyle(self, color):
-        if color == 'gray':
-            return 'background-color: #A5A5A5; color: black; border-radius: 65px;'
-        elif color == 'orange':
-            return 'background-color: #FF9500; color: white; border-radius: 65px;'
-        elif color == 'dark':
-            return 'background-color: #333333; color: white; border-radius: 65px;'
-        elif color == 'dark2':
-            return 'background-color: #333333; color: white; border-radius: 65px; text-align: left; padding-left: 45px;'
 
     def reset(self):
         self.current = ''
