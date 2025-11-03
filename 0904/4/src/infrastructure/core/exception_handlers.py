@@ -1,0 +1,32 @@
+import logging
+
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+
+from src.domain.exceptions import EmptyTaskError, PersistenceError
+
+log = logging.getLogger(__name__)
+
+
+def add_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(EmptyTaskError)
+    async def empty_task_exception_handler(request: Request, exc: EmptyTaskError):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST, content={'warning': exc.message}
+        )
+
+    @app.exception_handler(PersistenceError)
+    async def persistence_exception_handler(request: Request, exc: PersistenceError):
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={'error': 'An internal error occurred while processing data.'},
+        )
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        log.critical(f'Unhandled exception occurred: {exc}', exc_info=True)
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={'error': 'An unexpected internal server error occurred.'},
+        )
