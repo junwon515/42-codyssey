@@ -26,6 +26,11 @@ class EmptyTaskError(BusinessError):
         super().__init__(message)
 
 
+class NotFoundError(BusinessError):
+    def __init__(self, message: str = 'Requested resource not found.'):
+        super().__init__(message)
+
+
 class PersistenceError(InfrastructureError):
     def __init__(self, original_exception: Exception):
         super().__init__(

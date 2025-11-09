@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import EmptyTaskError, PersistenceError
+from src.domain.exceptions import EmptyTaskError, NotFoundError, PersistenceError
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +13,12 @@ def add_exception_handlers(app: FastAPI) -> None:
     async def empty_task_exception_handler(request: Request, exc: EmptyTaskError):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST, content={'warning': exc.message}
+        )
+
+    @app.exception_handler(NotFoundError)
+    async def not_found_exception_handler(request: Request, exc: NotFoundError):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={'warning': exc.message}
         )
 
     @app.exception_handler(PersistenceError)
