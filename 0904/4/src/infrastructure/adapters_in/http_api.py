@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
-from src.infrastructure.adapters_in import todo
+from src.infrastructure.adapters_in import answer, question, todo
 
 api_router = APIRouter()
 api_router.include_router(todo.router)
+api_router.include_router(question.router)
+api_router.include_router(answer.router)

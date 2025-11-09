@@ -5,13 +5,11 @@ from datetime import datetime
 from src.domain.exceptions import InfrastructureError
 from src.domain.models import Todo
 from src.domain.ports import TodoRepository
-
-CSV_FILE = 'todo_data.csv'
-FIELDNAMES = ['id', 'task', 'due_date', 'is_completed']
+from src.infrastructure.core.config import settings
 
 
 class CsvTodoRepository(TodoRepository):
-    def __init__(self, filepath: str = CSV_FILE):
+    def __init__(self, filepath: str):
         self.filepath = filepath
         self._initialize_file()
 
@@ -19,7 +17,7 @@ class CsvTodoRepository(TodoRepository):
         if not os.path.exists(self.filepath):
             try:
                 with open(self.filepath, 'w', newline='', encoding='utf-8') as f:
-                    writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+                    writer = csv.DictWriter(f, fieldnames=settings.FIELDNAMES)
                     writer.writeheader()
             except OSError as e:
                 raise InfrastructureError(
@@ -30,7 +28,7 @@ class CsvTodoRepository(TodoRepository):
     def _write_all(self, todos: list[Todo]) -> None:
         try:
             with open(self.filepath, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+                writer = csv.DictWriter(f, fieldnames=settings.FIELDNAMES)
                 writer.writeheader()
                 for todo in todos:
                     row = {
@@ -49,7 +47,7 @@ class CsvTodoRepository(TodoRepository):
     def add(self, todo: Todo) -> None:
         try:
             with open(self.filepath, 'a', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+                writer = csv.DictWriter(f, fieldnames=settings.FIELDNAMES)
                 row = {
                     'id': todo.id,
                     'task': todo.task,
