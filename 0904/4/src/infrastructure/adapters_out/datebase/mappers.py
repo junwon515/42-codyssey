@@ -1,3 +1,5 @@
+from datetime import UTC
+
 from sqlalchemy import inspect
 from src.domain.models import Answer, Question, Todo
 from src.infrastructure.adapters_out.datebase.daos import (
@@ -15,6 +17,9 @@ class TodoMapper:
             task=todo_table.task,
             due_date=todo_table.due_date,
             is_completed=todo_table.is_completed,
+            creator_ip=todo_table.creator_ip,
+            created_at=todo_table.created_at.replace(tzinfo=UTC),
+            password_hash=todo_table.password_hash,
         )
 
     @staticmethod
@@ -24,6 +29,8 @@ class TodoMapper:
             task=todo.task,
             due_date=todo.due_date,
             is_completed=todo.is_completed,
+            creator_ip=todo.creator_ip,
+            password_hash=todo.password_hash,
         )
 
     @staticmethod
@@ -49,8 +56,11 @@ class QuestionMapper:
             id=question_table.id,
             subject=question_table.subject,
             content=question_table.content,
-            create_date=question_table.create_date,
+            creator_ip=question_table.creator_ip,
+            created_at=question_table.created_at.replace(tzinfo=UTC),
             answers=domain_answers,
+            answer_count=question_table.answer_count,
+            password_hash=question_table.password_hash,
         )
 
     @staticmethod
@@ -59,7 +69,8 @@ class QuestionMapper:
             id=question.id,
             subject=question.subject,
             content=question.content,
-            create_date=question.create_date,
+            creator_ip=question.creator_ip,
+            password_hash=question.password_hash,
         )
 
     @staticmethod
@@ -73,11 +84,31 @@ class QuestionMapper:
 class AnswerMapper:
     @staticmethod
     def to_domain(answer_table: AnswerTable) -> Answer:
+        domain_replies = []
+        sa_instance_state = inspect(answer_table)
+
+        if 'replies' not in sa_instance_state.unloaded:
+            domain_replies = [
+                AnswerMapper.to_domain(reply_table)
+                for reply_table in answer_table.replies
+            ]
+
+        content = answer_table.content
+        creator_ip = answer_table.creator_ip
+        if answer_table.deleted_at:
+            content = 'deleted'
+            creator_ip = 'deleted'
+
         return Answer(
             id=answer_table.id,
-            content=answer_table.content,
-            create_date=answer_table.create_date,
+            content=content,
             question_id=answer_table.question_id,
+            creator_ip=creator_ip,
+            parent_id=answer_table.parent_id,
+            created_at=answer_table.created_at.replace(tzinfo=UTC),
+            replies=domain_replies,
+            reply_count=answer_table.reply_count,
+            password_hash=answer_table.password_hash,
         )
 
     @staticmethod
@@ -85,8 +116,10 @@ class AnswerMapper:
         return AnswerTable(
             id=answer.id,
             content=answer.content,
-            create_date=answer.create_date,
             question_id=answer.question_id,
+            creator_ip=answer.creator_ip,
+            parent_id=answer.parent_id,
+            password_hash=answer.password_hash,
         )
 
     @staticmethod

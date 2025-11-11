@@ -3,7 +3,13 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import EmptyTaskError, NotFoundError, PersistenceError
+from src.domain.exceptions import (
+    AuthorizationError,
+    EmptyTaskError,
+    NotFoundError,
+    PersistenceError,
+    ValidationError,
+)
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +25,21 @@ def add_exception_handlers(app: FastAPI) -> None:
     async def not_found_exception_handler(request: Request, exc: NotFoundError):
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content={'warning': exc.message}
+        )
+
+    @app.exception_handler(ValidationError)
+    async def validation_exception_handler(request: Request, exc: ValidationError):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={'warning': exc.message},
+        )
+
+    @app.exception_handler(AuthorizationError)
+    async def authorization_exception_handler(
+        request: Request, exc: AuthorizationError
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN, content={'error': exc.message}
         )
 
     @app.exception_handler(PersistenceError)

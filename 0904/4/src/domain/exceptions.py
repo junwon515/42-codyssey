@@ -13,6 +13,13 @@ class BusinessError(ApplicationBaseError):
     pass
 
 
+class AuthorizationError(ApplicationBaseError):
+    def __init__(
+        self, message: str = 'You do not have permission to perform this action.'
+    ):
+        super().__init__(message)
+
+
 class InfrastructureError(ApplicationBaseError):
     def __init__(self, message: str, original_exception: Exception = None):
         super().__init__(message)
@@ -28,6 +35,11 @@ class EmptyTaskError(BusinessError):
 
 class NotFoundError(BusinessError):
     def __init__(self, message: str = 'Requested resource not found.'):
+        super().__init__(message)
+
+
+class ValidationError(BusinessError):
+    def __init__(self, message: str = 'Data validation error occurred.'):
         super().__init__(message)
 
 

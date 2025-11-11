@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
 from src.application.services import QuestionService
 from src.infrastructure.adapters_in.dtos import (
+    AuthRequest,
+    PaginatedResponse,
     QuestionCreateRequest,
     QuestionUpdateRequest,
     QuestionViewResponse,
@@ -16,20 +18,31 @@ router = APIRouter(prefix='/question', tags=['question'])
 )
 async def add_question(
     question_dto: QuestionCreateRequest,
+    request: Request,
     service: QuestionService = Depends(get_question_service),
 ) -> QuestionViewResponse:
     new_question_entity = await service.create_question(
-        subject=question_dto.subject, content=question_dto.content
+        subject=question_dto.subject,
+        content=question_dto.content,
+        creator_ip=request.client.host,
+        password=question_dto.password,
     )
     return QuestionViewResponse.model_validate(new_question_entity)
 
 
-@router.get('/', response_model=list[QuestionViewResponse])
-async def retrieve_questions(
+@router.get('/', response_model=PaginatedResponse[QuestionViewResponse])
+async def get_questions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     service: QuestionService = Depends(get_question_service),
-) -> list[QuestionViewResponse]:
-    question_entities = await service.get_all_questions()
-    return [QuestionViewResponse.model_validate(entity) for entity in question_entities]
+) -> PaginatedResponse[QuestionViewResponse]:
+    items, total = await service.get_questions(skip=skip, limit=limit)
+    return PaginatedResponse(
+        total_items=total,
+        items=[QuestionViewResponse.model_validate(e) for e in items],
+        page=(skip // limit) + 1,
+        page_size=limit,
+    )
 
 
 @router.get('/{question_id}', response_model=QuestionViewResponse)
@@ -50,12 +63,18 @@ async def update_question(
         question_id=question_id,
         subject=question_dto.subject,
         content=question_dto.content,
+        password=question_dto.password,
     )
     return QuestionViewResponse.model_validate(updated_question_entity)
 
 
 @router.delete('/{question_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_single_question(
-    question_id: str, service: QuestionService = Depends(get_question_service)
+    question_id: str,
+    auth: AuthRequest,
+    service: QuestionService = Depends(get_question_service),
 ) -> None:
-    await service.delete_question(question_id=question_id)
+    await service.delete_question(
+        question_id=question_id,
+        password=auth.password,
+    )
