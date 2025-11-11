@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 from src.application.services import TodoService
 from src.infrastructure.adapters_in.dtos import (
     TodoCreateRequest,
-    TodoItem,
+    TodoUpdateRequest,
     TodoViewResponse,
 )
 from src.infrastructure.core.dependencies import get_todo_service
@@ -39,7 +39,9 @@ async def get_single_todo(
 
 @router.put('/{todo_id}', response_model=TodoViewResponse)
 async def update_todo(
-    todo_id: str, todo_dto: TodoItem, service: TodoService = Depends(get_todo_service)
+    todo_id: str,
+    todo_dto: TodoUpdateRequest,
+    service: TodoService = Depends(get_todo_service),
 ) -> TodoViewResponse:
     updated_todo_entity = await service.update_todo(
         todo_id=todo_id,

@@ -17,7 +17,7 @@ class TodoViewResponse(BaseModel):
     is_completed: bool
 
 
-class TodoItem(BaseModel):
+class TodoUpdateRequest(BaseModel):
     task: str
     due_date: date | None = None
 
