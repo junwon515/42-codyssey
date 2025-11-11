@@ -51,6 +51,22 @@ async def update_todo(
     return TodoViewResponse.model_validate(updated_todo_entity)
 
 
+@router.post('/{todo_id}/complete', response_model=TodoViewResponse)
+async def mark_todo_as_complete(
+    todo_id: str, service: TodoService = Depends(get_todo_service)
+) -> TodoViewResponse:
+    updated_todo = await service.complete_todo(todo_id=todo_id)
+    return TodoViewResponse.model_validate(updated_todo)
+
+
+@router.post('/{todo_id}/uncomplete', response_model=TodoViewResponse)
+async def mark_todo_as_uncomplete(
+    todo_id: str, service: TodoService = Depends(get_todo_service)
+) -> TodoViewResponse:
+    updated_todo = await service.uncomplete_todo(todo_id=todo_id)
+    return TodoViewResponse.model_validate(updated_todo)
+
+
 @router.delete('/{todo_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_single_todo(
     todo_id: str, service: TodoService = Depends(get_todo_service)

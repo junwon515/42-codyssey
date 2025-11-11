@@ -13,6 +13,9 @@ class Todo:
     def complete(self) -> None:
         self.is_completed = True
 
+    def uncomplete(self) -> None:
+        self.is_completed = False
+
     def update(self, task: str, due_date: date | None) -> None:
         self.task = task
         self.due_date = due_date

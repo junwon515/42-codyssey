@@ -31,6 +31,16 @@ class TodoService:
         todo.update(task=task, due_date=due_date)
         return await self.uow.todos.update(todo)
 
+    async def complete_todo(self, *, todo_id: str) -> Todo:
+        todo = await self.get_todo(todo_id=todo_id)
+        todo.complete()
+        return await self.uow.todos.update(todo)
+
+    async def uncomplete_todo(self, *, todo_id: str) -> Todo:
+        todo = await self.get_todo(todo_id=todo_id)
+        todo.uncomplete()
+        return await self.uow.todos.update(todo)
+
     async def delete_todo(self, *, todo_id: str) -> None:
         await self.get_todo(todo_id=todo_id)
         return await self.uow.todos.delete(todo_id)
