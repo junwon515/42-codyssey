@@ -56,6 +56,7 @@ class SqlAlchemyTodoRepository(TodoRepository):
             todo_table = await self.session.get(TodoTable, todo_id)
             if todo_table:
                 await self.session.delete(todo_table)
+                await self.session.flush()
         except Exception as e:
             raise PersistenceError(original_exception=e)
 
@@ -107,6 +108,7 @@ class SqlAlchemyQuestionRepository(QuestionRepository):
             question_table = await self.session.get(QuestionTable, question_id)
             if question_table:
                 await self.session.delete(question_table)
+                await self.session.flush()
         except Exception as e:
             raise PersistenceError(original_exception=e)
 
@@ -145,5 +147,6 @@ class SqlAlchemyAnswerRepository(AnswerRepository):
             answer_table = await self.session.get(AnswerTable, answer_id)
             if answer_table:
                 await self.session.delete(answer_table)
+                await self.session.flush()
         except Exception as e:
             raise PersistenceError(original_exception=e)
