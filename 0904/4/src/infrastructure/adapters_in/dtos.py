@@ -117,6 +117,10 @@ class AuthRequest(BaseModel):
     password: str
 
 
+class AuthStatusResponse(BaseModel):
+    is_admin: bool
+
+
 class AdminDeletedItemsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

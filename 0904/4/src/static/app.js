@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
         answers: { currentPage: 1 }
     };
 
+    // 전역 관리자 상태 변수
+    let GLOBAL_IS_ADMIN = false;
+
     // === [ 2. 라우터 ] ===
 
     /**
@@ -23,6 +26,16 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function router() {
         root.innerHTML = '<div class="loading-spinner"></div>';
+
+        // 페이지 렌더링 전, 관리자 상태를 먼저 확인합니다.
+        await checkAdminStatus();
+
+        // 관리자 상태에 따라 Admin 네비게이션 링크를 표시/숨김
+        const adminNavLink = document.getElementById('admin-nav-link');
+        if (adminNavLink) {
+            // GLOBAL_IS_ADMIN이 true이면 'display'를 초기화(CSS 기본값), false이면 'none'으로 설정
+            adminNavLink.style.display = GLOBAL_IS_ADMIN ? '' : 'none';
+        }
 
         const fullHash = window.location.hash || '#/';
         const [hash, queryString] = fullHash.split('?');
@@ -91,6 +104,21 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error(errorMsg);
         }
         return data;
+    }
+
+    /**
+     * 관리자 상태 확인
+     * API를 호출하여 전역 GLOBAL_IS_ADMIN 변수를 업데이트합니다.
+     */
+    async function checkAdminStatus() {
+        try {
+            // 이 엔드포인트는 IP만 확인하므로 실패 시(404 등) 관리자가 아닌 것으로 간주
+            const data = await fetchAPI('/auth/status');
+            GLOBAL_IS_ADMIN = data.is_admin;
+        } catch (error) {
+            console.warn('Admin status check failed, assuming non-admin.', error);
+            GLOBAL_IS_ADMIN = false;
+        }
     }
 
     /**
@@ -225,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="actions">
                     <button class="btn btn-secondary btn-small btn-update-toggle">수정</button>
                     <button class="btn btn-danger btn-small btn-delete-toggle">삭제</button>
-                    <button class="btn btn-warning btn-small btn-admin-soft-delete">관리자 삭제</button>
+                    ${GLOBAL_IS_ADMIN ? `<button class="btn btn-warning btn-small btn-admin-soft-delete">관리자 삭제</button>` : ''}
                 </div>
             </div>
 
@@ -271,7 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelEditBtn.onclick = () => toggleView(item.id, '.view-mode');
         cancelDeleteBtn.onclick = () => toggleView(item.id, '.view-mode');
 
-        item.querySelector('.btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'todos', todo.id));
+        if (GLOBAL_IS_ADMIN) {
+            item.querySelector('.btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'todos', todo.id));
+        }
 
         return item;
     }
@@ -411,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="question-actions answer-actions">
                             <button class="btn btn-secondary btn-update-toggle">수정</button>
                             <button class="btn btn-danger btn-delete-toggle">삭제</button>
-                            <button class="btn btn-warning btn-admin-soft-delete">관리자 삭제</button>
+                            ${GLOBAL_IS_ADMIN ? `<button class="btn btn-warning btn-admin-soft-delete">관리자 삭제</button>` : ''}
                         </div>
                     </div>
 
@@ -469,7 +499,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.querySelector('.inline-edit-form').addEventListener('submit', (e) => handleUpdateQuestion(e, q.id));
             document.querySelector('.inline-delete-form').addEventListener('submit', (e) => handleDeleteQuestion(e, q.id));
-            document.querySelector('.view-mode .btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'questions', q.id));
+
+            if (GLOBAL_IS_ADMIN) {
+                document.querySelector('.view-mode .btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'questions', q.id));
+            }
 
             // 답변 폼 리스너
             document.getElementById('add-answer-form').addEventListener('submit', handleAddAnswer);
@@ -519,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn btn-link btn-reply">답글</button>
                         <button class="btn btn-link btn-update-toggle">수정</button>
                         <button class="btn btn-link btn-delete-toggle">삭제</button>
-                        <button class="btn btn-link btn-warning btn-admin-soft-delete">관리자 삭제</button>
+                        ${GLOBAL_IS_ADMIN ? `<button class="btn btn-link btn-warning btn-admin-soft-delete">관리자 삭제</button>` : ''}
                         <span style="margin-left: auto;">답글 ${answer.reply_count}개</span>
                     </div>
                 </div>
@@ -558,7 +591,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             answerElement.querySelector('.inline-edit-form').addEventListener('submit', (e) => handleUpdateAnswer(e, answer.id));
             answerElement.querySelector('.inline-delete-form').addEventListener('submit', (e) => handleDeleteAnswer(e, answer.id));
-            answerElement.querySelector('.btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'answers', answer.id));
+
+            if (GLOBAL_IS_ADMIN) {
+                answerElement.querySelector('.btn-admin-soft-delete').addEventListener('click', (e) => handleAdminSoftDelete(e, 'answers', answer.id));
+            }
         }
 
         // 9. 대댓글 동적 로딩 처리
@@ -908,7 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = e.target.elements.password.value;
         if (!password) { alert('비밀번호를 입력하세요.'); return; }
 
-        if (!confirm('정말로 이 질문을 삭제하시겠습니까? (소프트 삭제)')) return;
+        if (!confirm('정말로 이 질문을 삭제하시겠습니까?')) return;
 
         try {
             await fetchAPI(`/question/${id}`, {
@@ -968,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = e.target.elements.password.value;
         if (!password) { alert('비밀번호를 입력하세요.'); return; }
 
-        if (!confirm('정말로 이 답변을 삭제하시겠습니까? (소프트 삭제)')) return;
+        if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return;
 
         try {
             await fetchAPI(`/answer/${id}`, {
