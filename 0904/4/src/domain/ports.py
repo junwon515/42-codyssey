@@ -23,6 +23,9 @@ class TodoRepository(Protocol):
     ) -> tuple[list[Todo], int]:
         ...
 
+    async def get(self, todo_id: str) -> Todo | None:
+        ...
+
     async def get_any(self, todo_id: str) -> Todo | None:
         ...
 

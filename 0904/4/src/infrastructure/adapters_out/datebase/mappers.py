@@ -19,6 +19,7 @@ class TodoMapper:
             is_completed=todo_table.is_completed,
             creator_ip=todo_table.creator_ip,
             created_at=todo_table.created_at.replace(tzinfo=UTC),
+            updated_at=todo_table.updated_at.replace(tzinfo=UTC),
             password_hash=todo_table.password_hash,
         )
 
@@ -58,6 +59,7 @@ class QuestionMapper:
             content=question_table.content,
             creator_ip=question_table.creator_ip,
             created_at=question_table.created_at.replace(tzinfo=UTC),
+            updated_at=question_table.updated_at.replace(tzinfo=UTC),
             answers=domain_answers,
             answer_count=question_table.answer_count,
             password_hash=question_table.password_hash,
@@ -93,19 +95,17 @@ class AnswerMapper:
                 for reply_table in answer_table.replies
             ]
 
-        content = answer_table.content
-        creator_ip = answer_table.creator_ip
-        if answer_table.deleted_at:
-            content = 'deleted'
-            creator_ip = 'deleted'
-
         return Answer(
             id=answer_table.id,
-            content=content,
+            content=answer_table.content,
             question_id=answer_table.question_id,
-            creator_ip=creator_ip,
+            creator_ip=answer_table.creator_ip,
             parent_id=answer_table.parent_id,
             created_at=answer_table.created_at.replace(tzinfo=UTC),
+            updated_at=answer_table.updated_at.replace(tzinfo=UTC),
+            deleted_at=answer_table.deleted_at.replace(tzinfo=UTC)
+            if answer_table.deleted_at
+            else None,
             replies=domain_replies,
             reply_count=answer_table.reply_count,
             password_hash=answer_table.password_hash,

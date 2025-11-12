@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="due-date">${todo.due_date ? `마감: ${todo.due_date}` : ''}</div>
                     <div class="todo-meta">
                         <span>IP: ${todo.creator_ip}</span> |
-                        <span>Created: ${formatDate(todo.created_at)}</span>
+                        <span>Created: ${formatDate(todo.created_at)}${todo.updated_at ? ' <small>(수정됨)</small>' : ''}</span>
                     </div>
                 </div>
                 <div class="actions">
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <h1 id="question-subject">${q.subject}</h1>
                             <div class="question-detail-meta">
                                 <span>작성자: ${q.creator_ip}</span>
-                                <span>작성일: ${formatDate(q.created_at)}</span>
+                                <span>작성일: ${formatDate(q.created_at)}${q.updated_at ? ` <small>(수정됨)</small>` : ''}</span>
                             </div>
                         </div>
                         <div class="question-content" id="question-content">${q.content.replace(/\n/g, '<br>')}</div>
@@ -529,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         answerElement.id = `answer-${answer.id}`;
 
         // 6. 삭제된 답글 UI
-        if (answer.content === 'deleted') {
+        if (answer.deleted_at) {
             answerElement.classList.add('deleted-answer');
             answerElement.innerHTML = `
                 <div class="answer-meta">
@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="view-mode">
                     <div class="answer-meta">
                         <span class="creator">작성자: ${answer.creator_ip}</span>
-                        <span>${formatDate(answer.created_at)}</span>
+                        <span>${formatDate(answer.created_at)}${answer.updated_at ? ` <small>(수정됨)</small>` : ''}</span>
                     </div>
                     <div class="answer-content">${answer.content.replace(/\n/g, '<br>')}</div>
                     <div class="answer-actions">

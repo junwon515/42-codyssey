@@ -93,6 +93,7 @@ class SqlAlchemyTodoRepository(TodoRepository):
             if todo_table and todo_table.deleted_at is None:
                 TodoMapper.update_table_from_domain(todo, todo_table)
                 await self.session.flush()
+                await self.session.refresh(todo_table)
                 return TodoMapper.to_domain(todo_table)
             raise NotFoundError(f'Todo with id {todo.id} not found.')
         except Exception as e:

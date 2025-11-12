@@ -18,8 +18,6 @@ class PaginatedResponse(BaseModel, Generic[T]):
 def mask_ip(ip: str) -> str:
     if not ip:
         return 'unknown'
-    if ip == 'deleted':
-        return 'deleted'
     if ip in ('127.0.0.1', 'localhost'):
         return 'localhost'
 
@@ -38,10 +36,17 @@ class TodoViewResponse(BaseModel):
     is_completed: bool
     creator_ip: str
     created_at: datetime
+    updated_at: datetime | None = None
 
     @field_serializer('creator_ip')
     def serialize_ip(self, ip: str) -> str:
         return mask_ip(ip)
+
+    @field_serializer('updated_at')
+    def serialize_updated_at(self, updated_at: datetime | None) -> datetime | None:
+        if updated_at == self.created_at:
+            return None
+        return updated_at
 
 
 class TodoCreateRequest(BaseModel):
@@ -65,12 +70,28 @@ class AnswerViewResponse(BaseModel):
     creator_ip: str
     parent_id: str | None = None
     created_at: datetime
+    updated_at: datetime | None = None
+    deleted_at: datetime | None = None
     replies: list['AnswerViewResponse'] = []
     reply_count: int
 
     @field_serializer('creator_ip')
     def serialize_ip(self, ip: str) -> str:
+        if self.deleted_at is not None:
+            return 'deleted'
         return mask_ip(ip)
+
+    @field_serializer('updated_at')
+    def serialize_updated_at(self, updated_at: datetime | None) -> datetime | None:
+        if updated_at == self.created_at:
+            return None
+        return updated_at
+
+    @field_serializer('content')
+    def serialize_content(self, content: str) -> str:
+        if self.deleted_at is not None:
+            return 'This answer has been deleted.'
+        return content
 
 
 class AnswerCreateRequest(BaseModel):
@@ -93,12 +114,19 @@ class QuestionViewResponse(BaseModel):
     content: str
     creator_ip: str
     created_at: datetime
+    updated_at: datetime | None = None
     answers: list[AnswerViewResponse] = []
     answer_count: int
 
     @field_serializer('creator_ip')
     def serialize_ip(self, ip: str) -> str:
         return mask_ip(ip)
+
+    @field_serializer('updated_at')
+    def serialize_updated_at(self, updated_at: datetime | None) -> datetime | None:
+        if updated_at == self.created_at:
+            return None
+        return updated_at
 
 
 class QuestionCreateRequest(BaseModel):
