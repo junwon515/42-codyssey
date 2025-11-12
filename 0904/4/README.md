@@ -91,7 +91,11 @@
     * **특징:** `SQLAlchemy`의 `Base`를 상속받은 테이블 모델. DB의 컬럼, 타입, 관계를 정의합니다.
     * **파일:** `src/infrastructure/adapters_out/datebase/daos.py` (e.g., `TodoTable`, `QuestionTable`)
 
-이 세 객체 간의 변환은 `src/infrastructure/adapters_out/datebase/mappers.py`에서 명시적으로 이루어집니다.
+이 세 객체 간의 변환은 각 계층의 경계에서 **서로 다른 방식** 으로 이루어집니다.
+
+* **엔티티(Entity) ↔ DAO** 변환은 `src/infrastructure/adapters_out/datebase/mappers.py`가 명시적으로 담당합니다.
+* **엔티티 → DTO** 변환은 API 어댑터(`todo.py` 등)가 Pydantic의 `.model_validate()`를 호출하여 처리합니다.
+* **DTO → 엔티티** 변환은 API 어댑터가 DTO의 값을 원시 값(str, date 등)으로 풀어서 서비스 메서드에 전달하면, 서비스 내부에서 엔티티를 생성하는 방식으로 이루어집니다.
 
 ### C. Unit of Work (UoW) 패턴
 
