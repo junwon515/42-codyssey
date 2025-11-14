@@ -14,9 +14,9 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
     async def __aenter__(self):
         self.session = self.session_factory()
-        self.todos = SqlAlchemyTodoRepository(self.session)
-        self.questions = SqlAlchemyQuestionRepository(self.session)
-        self.answers = SqlAlchemyAnswerRepository(self.session)
+        self.todo_repo = SqlAlchemyTodoRepository(self.session)
+        self.question_repo = SqlAlchemyQuestionRepository(self.session)
+        self.answer_repo = SqlAlchemyAnswerRepository(self.session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

@@ -95,9 +95,9 @@ class AnswerRepository(Protocol):
 
 
 class UnitOfWork(Protocol):
-    todos: TodoRepository
-    questions: QuestionRepository
-    answers: AnswerRepository
+    todo_repo: TodoRepository
+    question_repo: QuestionRepository
+    answer_repo: AnswerRepository
 
     async def __aenter__(self):
         ...
