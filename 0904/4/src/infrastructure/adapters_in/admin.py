@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 
+from src.application.dtos import AdminDeletedItemsResponse
 from src.application.services import AdminService
-from src.infrastructure.adapters_in.dtos import AdminDeletedItemsResponse
 from src.infrastructure.core.dependencies import get_admin_service, verify_trusted_ip
 
 router = APIRouter(
@@ -15,8 +15,7 @@ async def get_list_deleted_items(
     limit: int = Query(10, ge=1, le=100),
     admin_service: AdminService = Depends(get_admin_service),
 ) -> AdminDeletedItemsResponse:
-    deleted_items = await admin_service.get_deleted_items(skip=skip, limit=limit)
-    return AdminDeletedItemsResponse.model_validate(deleted_items)
+    return await admin_service.get_deleted_items(skip=skip, limit=limit)
 
 
 @router.delete(

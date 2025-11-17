@@ -1,6 +1,6 @@
 import bcrypt
 
-from src.domain.ports import PasswordManager
+from src.application.ports import PasswordManager
 
 
 class BcryptPasswordManager(PasswordManager):

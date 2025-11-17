@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from src.infrastructure.adapters_in.dtos import AuthStatusResponse
+from src.application.dtos import AuthStatusResponse
 from src.infrastructure.core.config import settings
 
 router = APIRouter(prefix='/auth', tags=['auth'])

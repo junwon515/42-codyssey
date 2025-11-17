@@ -4,9 +4,9 @@ from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from src.domain.entity import Answer, Question, Todo
 from src.domain.exceptions import NotFoundError, PersistenceError
-from src.domain.models import Answer, Question, Todo
-from src.domain.ports import AnswerRepository, QuestionRepository, TodoRepository
+from src.domain.repos import AnswerRepository, QuestionRepository, TodoRepository
 from src.infrastructure.adapters_out.datebase.daos import (
     AnswerTable,
     QuestionTable,
@@ -42,6 +42,7 @@ class SqlAlchemyTodoRepository(TodoRepository):
         query = (
             select(TodoTable)
             .where(TodoTable.deleted_at.is_(None))
+            .order_by(TodoTable.created_at.desc())
             .offset(skip)
             .limit(limit)
         )

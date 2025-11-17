@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi import Depends, Request
 
+from src.application.ports import PasswordManager
 from src.application.services import (
     AdminService,
     AnswerService,
@@ -9,9 +10,8 @@ from src.application.services import (
     TodoService,
 )
 from src.domain.exceptions import AuthorizationError
-from src.domain.ports import (
+from src.domain.repos import (
     AnswerRepository,
-    PasswordManager,
     QuestionRepository,
     TodoRepository,
     UnitOfWork,

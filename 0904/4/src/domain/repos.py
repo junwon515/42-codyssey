@@ -1,14 +1,6 @@
 from typing import Protocol
 
-from src.domain.models import Answer, Question, Todo
-
-
-class PasswordManager(Protocol):
-    def hash(self, password: str) -> str:
-        ...
-
-    def verify(self, password: str, password_hash: str) -> bool:
-        ...
+from src.domain.entity import Answer, Question, Todo
 
 
 class TodoRepository(Protocol):

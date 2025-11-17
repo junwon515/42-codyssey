@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from src.domain.ports import UnitOfWork
+from src.domain.repos import UnitOfWork
 from src.infrastructure.adapters_out.datebase.repos import (
     SqlAlchemyAnswerRepository,
     SqlAlchemyQuestionRepository,
