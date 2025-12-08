@@ -7,15 +7,15 @@ from sqlalchemy.orm import selectinload
 from src.domain.entity import Answer, Question, Todo
 from src.domain.exceptions import NotFoundError, PersistenceError
 from src.domain.repos import AnswerRepository, QuestionRepository, TodoRepository
-from src.infrastructure.adapters_out.datebase.daos import (
-    AnswerTable,
-    QuestionTable,
-    TodoTable,
-)
 from src.infrastructure.adapters_out.datebase.mappers import (
     AnswerMapper,
     QuestionMapper,
     TodoMapper,
+)
+from src.infrastructure.adapters_out.datebase.models import (
+    AnswerTable,
+    QuestionTable,
+    TodoTable,
 )
 
 

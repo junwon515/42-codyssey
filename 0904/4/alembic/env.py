@@ -17,7 +17,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.infrastructure.adapters_out.datebase import daos  # noqa
+from src.infrastructure.adapters_out.datebase import models  # noqa
 from src.infrastructure.core.config import settings  # noqa
 from src.infrastructure.core.database import Base  # noqa
 

@@ -2,7 +2,7 @@ from datetime import UTC
 
 from sqlalchemy import inspect
 from src.domain.entity import Answer, Question, Todo
-from src.infrastructure.adapters_out.datebase.daos import (
+from src.infrastructure.adapters_out.datebase.models import (
     AnswerTable,
     QuestionTable,
     TodoTable,

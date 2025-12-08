@@ -12,14 +12,14 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.session_factory = session_factory
         self.session: AsyncSession | None = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'SqlAlchemyUnitOfWork':
         self.session = self.session_factory()
         self.todo_repo = SqlAlchemyTodoRepository(self.session)
         self.question_repo = SqlAlchemyQuestionRepository(self.session)
         self.answer_repo = SqlAlchemyAnswerRepository(self.session)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.session:
             if exc_type:
                 await self.rollback()
@@ -27,10 +27,10 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
                 await self.commit()
             await self.session.close()
 
-    async def commit(self):
+    async def commit(self) -> None:
         if self.session:
             await self.session.commit()
 
-    async def rollback(self):
+    async def rollback(self) -> None:
         if self.session:
             await self.session.rollback()
